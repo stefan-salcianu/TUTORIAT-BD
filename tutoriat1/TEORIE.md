@@ -45,14 +45,14 @@ FROM [nume_schemă.]nume_obiect
 [ORDER BY {expresie | poziţie} [, {expresie | poziţie} ...] ];
 ```
 
-## 4. Instrucțiunea SELECT: Reguli și Alias-uri
+## 5. Instrucțiunea SELECT: Reguli și Alias-uri
 
 `SELECT` este o clauză **obligatorie** într-o interogare SQL.  
 Câmpurile din `SELECT` se separă prin **virgulă** și pot fi:
 
 ---
 
-### 1. Coloane simple
+### 5.1. Coloane simple
 
 ```sql
 SELECT FIRST_NAME, SALARY
@@ -63,7 +63,7 @@ Selectează direct coloanele `FIRST_NAME` și `SALARY` din tabel.
 
 ---
 
-### 2. Operații matematice
+### 5.2. Operații matematice
 
 ```sql
 SELECT FIRST_NAME, SALARY * 12 AS SALARIU_ANUAL
@@ -74,7 +74,7 @@ Se realizează o **operație matematică** pentru a calcula salariul anual.
 
 ---
 
-### 3. Funcții aplicate pe coloane
+### 5.3. Funcții aplicate pe coloane
 
 ```sql
 SELECT UPPER(FIRST_NAME) AS NUME_MAJUSCULE
@@ -85,7 +85,7 @@ Funcția `UPPER()` transformă valorile din coloană în **majuscule**.
 
 ---
 
-### 4. Subcereri (Subqueries)
+### 5.4. Subcereri (Subqueries)
 
 Subcererile sunt comenzi `SELECT` incluse în alte interogări.
 
@@ -110,13 +110,13 @@ Această interogare returnează angajații care au **salariul mai mare decât me
 
 ---
 
-## 5. Referențierea Tabelelor și Ambiguitatea
+## 6. Referențierea Tabelelor și Ambiguitatea
 
 Clauza **`FROM`** este obligatorie. Există mai multe moduri de a referenția coloanele:
 
 ---
 
-### 1. Simplu
+### 6.1. Simplu
 
 ```sql
 SELECT EMPLOYEE_ID, FIRST_NAME
@@ -127,7 +127,7 @@ Se folosesc direct numele coloanelor.
 
 ---
 
-### 2. Prefixat cu numele tabelului
+### 6.2. Prefixat cu numele tabelului
 
 ```sql
 SELECT EMPLOYEES.EMPLOYEE_ID, EMPLOYEES.FIRST_NAME
@@ -138,7 +138,7 @@ Coloanele sunt prefixate cu numele tabelului.
 
 ---
 
-### 3. Prefixat cu alias de tabel (**recomandat**)
+### 6.3. Prefixat cu alias de tabel (**recomandat**)
 
 ```sql
 SELECT E.EMPLOYEE_ID, E.FIRST_NAME
@@ -149,7 +149,7 @@ FROM EMPLOYEES E;
 
 ---
 
-### 4. Alias de tabel cu spații
+### 6.4. Alias de tabel cu spații
 
 ```sql
 SELECT "TABEL ANGAJATI".EMPLOYEE_ID, "TABEL ANGAJATI".FIRST_NAME
@@ -166,13 +166,13 @@ Dacă aliasul conține **spații**, trebuie pus între ghilimele `" "`.
 
 ---
 
-## 6. Filtrarea Datelor (WHERE) și Operatori
+## 7. Filtrarea Datelor (WHERE) și Operatori
 
 Dacă un query are mai multe condiții, se folosește **o singură clauză `WHERE`**, iar condițiile sunt legate prin operatori logici.
 
 ---
 
-### 1. Operatori de comparație
+### 7.1. Operatori de comparație
 
 `=`, `<>`, `!=`, `<`, `<=`, `>`, `>=`
 
@@ -186,7 +186,7 @@ Returnează angajații care au salariul **mai mare sau egal cu 3000**.
 
 ---
 
-### 2. Apartenență la interval (`BETWEEN`)
+### 7.2. Apartenență la interval (`BETWEEN`)
 
 `BETWEEN val1 AND val2` verifică dacă valoarea se află într-un **interval închis**.
 
@@ -200,7 +200,7 @@ Returnează angajații cu salariul **între 1500 și 3000 inclusiv**.
 
 ---
 
-### 3. Apartenență la mulțime (`IN`)
+### 7.3. Apartenență la mulțime (`IN`)
 
 `IN` verifică dacă o valoare aparține unei **liste de valori**.
 
@@ -214,7 +214,7 @@ Returnează angajații care lucrează în **departamentul 10 sau 30**.
 
 ---
 
-### 4. Operatori logici (`AND`, `OR`, `NOT`)
+### 7.4. Operatori logici (`AND`, `OR`, `NOT`)
 
 Permite combinarea mai multor condiții.
 
@@ -242,7 +242,7 @@ Query-ul filtrează angajații:
 
 ---
 
-## 7. Logica Valorilor NULL și UNKNOWN
+## 8. Logica Valorilor NULL și UNKNOWN
 
 `NULL` reprezintă absența unei valori. 
 * Pentru verificare, se folosește **`IS NULL`** sau **`IS NOT NULL`**.
@@ -258,7 +258,7 @@ Query-ul filtrează angajații:
 
 ---
 
-## 8. Sortarea Datelor (ORDER BY)
+## 9. Sortarea Datelor (ORDER BY)
 
 * **Default**: Sortarea este `ASC` (crescătoare).
 * **Specific**: Pentru fiecare coloană se poate pune `ASC` sau `DESC`.
@@ -268,7 +268,7 @@ Query-ul filtrează angajații:
 
 ---
 
-## 9. Pattern Matching (LIKE)
+## 10. Pattern Matching (LIKE)
 
 Folosit pentru a căuta șabloane în șiruri de caractere:
 * `_` (underscore): reprezintă un singur caracter.
