@@ -47,9 +47,58 @@ FROM [nume_schemă.]nume_obiect
 
 ## 4. Instrucțiunea SELECT: Reguli și Alias-uri
 
-`SELECT` este o clauză **obligatorie**. Câmpurile se separă prin virgulă și pot fi:
-* Coloane simple, operații matematice (`SALARY * 12`) sau funcții (`UPPER(NAME)`).
-* **Subcereri**: Comenzi `SELECT` încapsulate în alte clauze.
+`SELECT` este o clauză **obligatorie** într-o interogare SQL.  
+Câmpurile din `SELECT` se separă prin **virgulă** și pot fi:
+
+---
+
+### 1. Coloane simple
+
+```sql
+SELECT FIRST_NAME, SALARY
+FROM EMPLOYEES;
+```
+
+Selectează direct coloanele `FIRST_NAME` și `SALARY` din tabel.
+
+---
+
+### 2. Operații matematice
+
+```sql
+SELECT FIRST_NAME, SALARY * 12 AS SALARIU_ANUAL
+FROM EMPLOYEES;
+```
+
+Se realizează o **operație matematică** pentru a calcula salariul anual.
+
+---
+
+### 3. Funcții aplicate pe coloane
+
+```sql
+SELECT UPPER(FIRST_NAME) AS NUME_MAJUSCULE
+FROM EMPLOYEES;
+```
+
+Funcția `UPPER()` transformă valorile din coloană în **majuscule**.
+
+---
+
+### 4. Subcereri (Subqueries)
+
+Subcererile sunt comenzi `SELECT` incluse în alte interogări.
+
+```sql
+SELECT FIRST_NAME, SALARY
+FROM EMPLOYEES
+WHERE SALARY > (
+    SELECT AVG(SALARY)
+    FROM EMPLOYEES
+);
+```
+
+Această interogare returnează angajații care au **salariul mai mare decât media salariilor**.
 
 ### 💡 Reguli de Sintaxă:
 * **Alias-uri**: Se pot pune cu sau fără `AS`. Dacă alias-ul conține spații (blank-uri), se folosesc **ghilimelele** (`" "`).
@@ -63,11 +112,53 @@ FROM [nume_schemă.]nume_obiect
 
 ## 5. Referențierea Tabelelor și Ambiguitatea
 
-Clauza **`FROM`** este obligatorie. Există 4 moduri de a referenția coloanele:
-1. `SELECT column_name` (Simplu)
-2. `SELECT table.column_name` (Prefixat cu tabel)
-3. `SELECT t.column_name FROM table t` (Prefixat cu alias de tabel - **recomandat**)
-4. `SELECT "Alias Tabel".column` (Alias cu spații)
+Clauza **`FROM`** este obligatorie. Există mai multe moduri de a referenția coloanele:
+
+---
+
+### 1. Simplu
+
+```sql
+SELECT EMPLOYEE_ID, FIRST_NAME
+FROM EMPLOYEES;
+```
+
+Se folosesc direct numele coloanelor.
+
+---
+
+### 2. Prefixat cu numele tabelului
+
+```sql
+SELECT EMPLOYEES.EMPLOYEE_ID, EMPLOYEES.FIRST_NAME
+FROM EMPLOYEES;
+```
+
+Coloanele sunt prefixate cu numele tabelului.
+
+---
+
+### 3. Prefixat cu alias de tabel (**recomandat**)
+
+```sql
+SELECT E.EMPLOYEE_ID, E.FIRST_NAME
+FROM EMPLOYEES E;
+```
+
+`E` este un **alias** pentru tabelul `EMPLOYEES`, ceea ce face query-ul mai scurt și mai ușor de citit.
+
+---
+
+### 4. Alias de tabel cu spații
+
+```sql
+SELECT "TABEL ANGAJATI".EMPLOYEE_ID, "TABEL ANGAJATI".FIRST_NAME
+FROM EMPLOYEES "TABEL ANGAJATI";
+```
+
+Dacă aliasul conține **spații**, trebuie pus între ghilimele `" "`.
+
+---
 
 > **De ce prefixăm?** Pentru a evita ambiguitatea când:
 > * Lucrăm cu mai multe instanțe ale aceluiași tabel.
