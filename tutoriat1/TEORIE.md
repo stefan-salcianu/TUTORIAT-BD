@@ -1,22 +1,8 @@
 # 🗄️ Gestiunea Bazelor de Date - Concepte și SQL
 
-Acest repository conține fundamentele teoretice și practice pentru lucrul cu baze de date relaționale și limbajul SQL.
-
----
-
-## 📑 Cuprins
-1. [Introducere în Bazele de Date](#1-introducere)
-2. [Sisteme de Gestiune (SGBD)](#2-sgbd)
-3. [Limbajul SQL și Categorii de Instrucțiuni](#3-sql)
-4. [Analiza Sintaxei SELECT](#4-sintaxa-select)
-5. [Depanare Cod SQL (Studiu de caz)](#5-depanare)
-
----
 
 ## 1. Introducere
 O **bază de date** este un ansamblu structurat de date coerente, organizat fără redundanță inutilă. Aceasta este concepută pentru a fi accesată în mod concurent de către mai mulți utilizatori, asigurând integritatea informației.
-
-
 
 ## 2. Ce este un SGBD?
 Un **Sistem de Gestiune a Bazelor de Date (SGBD)** este produsul software care permite interacțiunea cu datele. 
@@ -56,4 +42,93 @@ FROM [nume_schemă.]nume_obiect
  CONNECT BY condiție_clauza_connect_by] 
 [GROUP BY expresie [, expresie ...] 
 [HAVING condiție_clauza_having] 
-[ORDER BY {expresie | poziţie} [, {expresie | poziţie} ...] ]; 
+[ORDER BY {expresie | poziţie} [, {expresie | poziţie} ...] ];
+```
+
+## 4. Instrucțiunea SELECT: Reguli și Alias-uri
+
+`SELECT` este o clauză **obligatorie**. Câmpurile se separă prin virgulă și pot fi:
+* Coloane simple, operații matematice (`SALARY * 12`) sau funcții (`UPPER(NAME)`).
+* **Subcereri**: Comenzi `SELECT` încapsulate în alte clauze.
+
+### 💡 Reguli de Sintaxă:
+* **Alias-uri**: Se pot pune cu sau fără `AS`. Dacă alias-ul conține spații (blank-uri), se folosesc **ghilimelele** (`" "`).
+* **String-uri (Valori)**: Se definesc întotdeauna cu **apostrof** (`' '`). Ghilimelele sunt doar pentru alias-uri!
+* **Wildcard (`*`)**: Afișează toate coloanele. 
+    * ⚠️ **Eroare**: Nu poți folosi `SELECT *, column_name...`. Dacă apare `*`, nu mai poți adăuga câmpuri individuale decât dacă prefixezi tabelul (`SELECT E.*, E.col`).
+* **Duplicate**: `DISTINCT` sau `UNIQUE` elimină rândurile duplicate din rezultat.
+* **Inspecție**: `DESC nume_tabel` (afișează structura). *Funcționează în Oracle SQL Developer, nu neapărat în DataGrip.*
+
+---
+
+## 5. Referențierea Tabelelor și Ambiguitatea
+
+Clauza **`FROM`** este obligatorie. Există 4 moduri de a referenția coloanele:
+1. `SELECT column_name` (Simplu)
+2. `SELECT table.column_name` (Prefixat cu tabel)
+3. `SELECT t.column_name FROM table t` (Prefixat cu alias de tabel - **recomandat**)
+4. `SELECT "Alias Tabel".column` (Alias cu spații)
+
+> **De ce prefixăm?** Pentru a evita ambiguitatea când:
+> * Lucrăm cu mai multe instanțe ale aceluiași tabel.
+> * Lucrăm cu tabele diferite care au coloane cu același nume (ex: `MANAGER_ID` în `Employees` și `Departments`).
+
+---
+
+## 6. Filtrarea Datelor (WHERE) și Operatori
+
+Dacă un query are mai multe condiții, se folosește o singură clauză `WHERE`, condițiile fiind legate prin operatori logici.
+
+### Operatori:
+* **Comparație**: `=`, `<>`, `!=`, `<`, `<=`, `>`, `>=`.
+* **Apartenență la interval**: `BETWEEN val1 AND val2` (interval închis).
+* **Apartenență la mulțime**: `IN (val1, val2, ... )`.
+* **Logici**: `AND`, `OR`, `NOT`.
+
+---
+
+## 7. Logica Valorilor NULL și UNKNOWN
+
+`NULL` reprezintă absența unei valori. 
+* Pentru verificare, se folosește **`IS NULL`** sau **`IS NOT NULL`**.
+* Comparațiile directe (`= NULL`) returnează starea **UNKNOWN**.
+
+### Tabel de Adevăr (Logica UNKNOWN):
+| Operație | Rezultat |
+| :--- | :--- |
+| **FALSE AND UNKNOWN** | FALSE |
+| **FALSE OR UNKNOWN** | UNKNOWN |
+| **TRUE OR UNKNOWN** | TRUE |
+| **TRUE AND UNKNOWN** | UNKNOWN |
+
+---
+
+## 8. Sortarea Datelor (ORDER BY)
+
+* **Default**: Sortarea este `ASC` (crescătoare).
+* **Specific**: Pentru fiecare coloană se poate pune `ASC` sau `DESC`.
+* **Tratarea NULL la sortare**:
+    * Sortare **DESC**: `NULL` apare primul.
+    * Sortare **ASC**: `NULL` apare ultimul.
+
+---
+
+## 9. Pattern Matching (LIKE)
+
+Folosit pentru a căuta șabloane în șiruri de caractere:
+* `_` (underscore): reprezintă un singur caracter.
+* `%` (procent): reprezintă zero, unul sau mai multe caractere.
+
+**Exemple:**
+* `LIKE '__A%'` -> Șir de minim 3 caractere, unde al 3-lea este 'A'.
+* `LIKE '_B_%'` -> Șir de minim 3 caractere, unde al 2-lea este 'B'.
+
+---
+
+### 🛠️ Exemplu de Depanare (Exercițiu)
+
+```sql
+SELECT employee_id, last_name 
+salary * 12 ANNUAL SALARY 
+FROM employees;
+```
