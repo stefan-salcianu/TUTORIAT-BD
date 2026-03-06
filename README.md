@@ -14,10 +14,10 @@
 
 ### 📅 Planificarea Ședințelor
 
-| Săptămâna | Tema Abordată | Resurse | Status |
-| :--- | :--- | :--- | :--- |
-| **S1** | Introducere în BD. Diagrame ER | [Slides/Doc](./S1) | ✅ Finalizat |
-| **S2** | Modelul Relațional. Chei & Constrângeri | [Scripturi](./S2) | 🕒 În lucru |
-| **S3** | SQL: SELECT, WHERE, ORDER BY | [Link] | 🔜 Urmează |
-| **S4** | SQL: Funcții de agregare & GROUP BY | [Link] | 🔜 Urmează |
-| **S5** | SQL: JOIN-uri (Inner, Left, Right, Full) | [Link] | 🔜 Urmează |
+| Tutoriat | Tema Abordata | Status |
+| :--- | :--- | :--- |
+| **tutoriat1** | Introducere în BD. Diagrame ER | 🔜 Urmeaza |
+| **tutoriat2** | Modelul Relațional. Chei & Constrângeri | 🔜 Urmeaza |
+| **tutoriat3** | SQL: SELECT, WHERE, ORDER BY | 🔜 Urmeaza |
+| **tutoriat4** | SQL: Funcții de agregare & GROUP BY | 🔜 Urmeaza |
+| **tutoriat5** | SQL: JOIN-uri (Inner, Left, Right, Full) | 🔜 Urmeaza |
