@@ -7,19 +7,21 @@
 - Salcianu Stefan-Alexandru
 
 ### 🎯 Obiectivele Tutoriatului
-- Intelegerea conceptelor de **modelare relationala** (ERD).
-- Stapanirea limbajului **SQL** (LDD, LMD).
-- Invatarea bunelor practici in **normalizarea** bazelor de date.
-- Pregatire pentru **colocviu** si **examenul final**.
+- Înțelegerea conceptelor de **modelare relatională** (ERD).
+- Stăpânirea limbajului **SQL** (LDD, LMD).
+- Învățarea bunelor practici in **normalizarea** bazelor de date.
+- Pregătire pentru **colocviu** și **examenul final**.
 
-### 📅 Planificarea Tuoriatelor
+### 📅 Planificarea Tutoriatelor
+
+⚠️ Această planificare este orientativă și poate fi modificată în funcție de progresul/necesitățile grupului
 
 | Tutoriat | Tema Abordata | Status |
 | :--- | :--- | :--- |
-| **tutoriat1** | ⏱️ Diagrame, Tabele, Relatii | 🔜 Urmeaza |
+| **tutoriat1** | ⏱️ Diagrame, Tabele, Relații | 🔜 Urmeaza |
 | **tutoriat2** | ⏱️ Limbajul de Control al Datelor (LCD)/ Manipulare a Datelor LDD | 🔜 Urmeaza |
-| **tutoriat3** | ⏱️ LMD, Secvente | 🔜 Urmeaza |
-| **tutoriat4** | ⏱️ SELECT, WHERE, ORDER BY si Pattern Matching | 🔜 Urmeaza |
+| **tutoriat3** | ⏱️ LMD, Secvențe | 🔜 Urmeaza |
+| **tutoriat4** | ⏱️ SELECT, WHERE, ORDER BY și Pattern Matching | 🔜 Urmeaza |
 | **tutoriat5** | ⏱️ In lucru | 🔜 Urmeaza |
 | **tutoriat6** | ⏱️ In lucru | 🔜 Urmeaza |
 | **tutoriat7** | ⏱️ In lucru | 🔜 Urmeaza |
