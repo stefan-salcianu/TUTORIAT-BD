@@ -24,7 +24,7 @@
 | **tutoriat4** | ⏱️ SELECT, WHERE, ORDER BY și Pattern Matching | 🔜 Urmeaza |
 | **tutoriat5** | ⏱️ Funcții SQL | 🔜 Urmeaza |
 | **tutoriat6** | ⏱️ JOIN | 🔜 Urmeaza |
-| **tutoriat7** | ⏱️ In lucru | 🔜 Urmeaza |
-| **tutoriat8** | ⏱️ In lucru | 🔜 Urmeaza |
-| **tutoriat9** | ⏱️ In lucru | 🔜 Urmeaza |
-| **tutoriat10** | ⏱️ In lucru | 🔜 Urmeaza |
+| **tutoriat7** | ⏱️ Funcții Grup și Clauzele GROUP BY, HAVING | 🔜 Urmeaza |
+| **tutoriat8** | ⏱️ Cereri Ierarhice, Clauza WITH și Operatorul EXISTS | 🔜 Urmeaza |
+| **tutoriat9** | ⏱️ Operatorul DIVISION și Vizualizări (VIEW) | 🔜 Urmeaza |
+| **tutoriat10** | ⏱️ Indexuri, Arbore Algebric, Optimizări | 🔜 Urmeaza |
