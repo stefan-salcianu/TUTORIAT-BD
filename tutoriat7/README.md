@@ -1,1105 +1,1929 @@
-## 🗺️ Schema bazei de date — Librărie Online
+# 🔀 Operatorul DIVISION și Vizualizări (VIEW)
 
-O librărie cu autori, cărți, clienți, comenzi și recenzii.
+---
+
+## 1. Introducere în Operatorul DIVISION
+
+### 1.1. Ce este DIVISION?
+
+**DIVISION** este o operație din algebra relațională care răspunde la întrebări de tipul **"toți"**, **"toate"**, **"fiecare"**.
+
+#### 🎯 Exemple intuitive:
+
+| Întrebare | Traducere în algebra relațională |
+|-----------|----------------------------------|
+| "Găsește angajații care au lucrat pe **toate** proiectele cu buget 10000" | DIVISION |
+| "Care studenți au promovat **toate** examenele din sesiune?" | DIVISION |
+| "Care clienți au cumpărat **fiecare** produs din categoria X?" | DIVISION |
+
+### 1.2. De ce este DIVISION dificil în SQL?
+
+SQL nu are un operator direct `DIVISION`. Trebuie să **simulăm** cuantificatorul universal (`∀`) folosind cuantificatorul existențial (`∃`) și negația.
+
+> 💡 **Regula de aur:**
+> ```
+> ∀x P(x)  ≡  ¬∃x ¬P(x)
+> ```
+> 
+> **Traducere:** "Pentru toți x, P(x) este adevărat" este echivalent cu "Nu există niciun x pentru care P(x) să fie fals."
+
+### 1.3. Aplicații practice
+
+- **Resurse umane:** Angajați care au competențele necesare pentru toate taskurile unui proiect
+- **E-commerce:** Clienți care au evaluat toate produsele dintr-o categorie
+- **Educație:** Studenți care au participat la toate cursurile obligatorii
+- **Logistică:** Furnizori care livrează toate tipurile de produse necesare
+
+---
+
+## 2. Fundamente teoretice - Cuantificatori
+
+### 2.1. Cuantificatorul universal (∀)
+
+**∀** = "pentru toți", "pentru fiecare"
+
+**Exemplu:** ∀ angajat, angajatul are salariu > 0
+
+### 2.2. Cuantificatorul existențial (∃)
+
+**∃** = "există cel puțin un", "există"
+
+**Exemplu:** ∃ angajat cu salariu > 20000
+
+### 2.3. Transformarea logică
+
+```
+∀x P(x)  ≡  ¬∃x ¬P(x)
+```
+
+**Demonstrație cu exemplu:**
+
+- **Enunț original:** "Toți angajații au lucrat pe proiectul X"
+- **Transformare:** "Nu există niciun angajat care să NU fi lucrat pe proiectul X"
+
+### 2.4. Traducerea în SQL
+
+| Cuantificator | SQL |
+|---------------|-----|
+| `∀` (pentru toți) | `NOT EXISTS (... NOT EXISTS ...)` |
+| `∃` (există) | `EXISTS` |
+| `¬∃` (nu există) | `NOT EXISTS` |
+
+---
+
+## 3. Schema HR extinsă
+
+### 3.1. Structura tabelelor
 
 ```sql
-CREATE TABLE autori (
-    id_autor       INT PRIMARY KEY,
-    nume           VARCHAR(100),
-    nationalitate  VARCHAR(50),
-    an_debut       INT
+-- Tabelul EMPLOYEES (angajați)
+CREATE TABLE EMPLOYEES (
+    EMPLOYEE_ID    NUMBER(6)    PRIMARY KEY,
+    FIRST_NAME     VARCHAR2(20),
+    LAST_NAME      VARCHAR2(25) NOT NULL,
+    EMAIL          VARCHAR2(25) NOT NULL,
+    PHONE_NUMBER   VARCHAR2(20),
+    HIRE_DATE      DATE         NOT NULL,
+    JOB_ID         VARCHAR2(10) NOT NULL,
+    SALARY         NUMBER(8,2),
+    COMMISSION_PCT NUMBER(2,2),
+    MANAGER_ID     NUMBER(6),
+    DEPARTMENT_ID  NUMBER(4)
 );
 
-CREATE TABLE carti (
-    id_carte       INT PRIMARY KEY,
-    titlu          VARCHAR(200),
-    id_autor       INT,
-    gen_literar    VARCHAR(50),
-    pret           DECIMAL(8,2),
-    an_publicare   INT,
-    stoc           INT,
-    FOREIGN KEY (id_autor) REFERENCES autori(id_autor)
+-- Tabelul PROJECT (proiecte)
+CREATE TABLE PROJECT (
+    PROJECT_ID     NUMBER(6)    PRIMARY KEY,
+    PROJECT_NAME   VARCHAR2(50) NOT NULL,
+    BUDGET         NUMBER(10,2),
+    START_DATE     DATE,
+    END_DATE       DATE,
+    MANAGER_ID     NUMBER(6)    -- FK către EMPLOYEES
 );
 
-CREATE TABLE clienti (
-    id_client      INT PRIMARY KEY,
-    nume           VARCHAR(100),
-    email          VARCHAR(100),
-    oras           VARCHAR(50),
-    data_inregistrare DATE
-);
-
-CREATE TABLE comenzi (
-    id_comanda     INT PRIMARY KEY,
-    id_client      INT,
-    data_comanda   DATE,
-    status         VARCHAR(20),   -- 'livrata', 'in_procesare', 'anulata'
-    total          DECIMAL(10,2),
-    FOREIGN KEY (id_client) REFERENCES clienti(id_client)
-);
-
-CREATE TABLE detalii_comanda (
-    id_comanda     INT,
-    id_carte       INT,
-    cantitate      INT,
-    pret_unitar    DECIMAL(8,2),
-    PRIMARY KEY (id_comanda, id_carte),
-    FOREIGN KEY (id_comanda) REFERENCES comenzi(id_comanda),
-    FOREIGN KEY (id_carte)   REFERENCES carti(id_carte)
-);
-
-CREATE TABLE recenzii (
-    id_recenzie    INT PRIMARY KEY,
-    id_client      INT,
-    id_carte       INT,
-    nota           INT,           -- 1–5
-    comentariu     VARCHAR2(4000),
-    data_recenzie  DATE,
-    FOREIGN KEY (id_client) REFERENCES clienti(id_client),
-    FOREIGN KEY (id_carte)  REFERENCES carti(id_carte)
+-- Tabelul WORKS_ON (relație M:N între angajați și proiecte)
+CREATE TABLE WORKS_ON (
+    EMPLOYEE_ID    NUMBER(6)    NOT NULL,
+    PROJECT_ID     NUMBER(6)    NOT NULL,
+    HOURS_WORKED   NUMBER(5,2),
+    ROLE           VARCHAR2(30),
+    PRIMARY KEY (EMPLOYEE_ID, PROJECT_ID),
+    FOREIGN KEY (EMPLOYEE_ID) REFERENCES EMPLOYEES(EMPLOYEE_ID),
+    FOREIGN KEY (PROJECT_ID) REFERENCES PROJECT(PROJECT_ID)
 );
 ```
 
----
+### 3.2. Diagrama ER
 
-### 📥 Date de test
+```
+         EMPLOYEES
+             |
+             | 1
+             |
+             | 
+             |
+             | N
+         WORKS_ON
+             |
+             | N
+             |
+             | 
+             |
+             | 1
+         PROJECT
+```
 
-<details>
-<summary>Click pentru scriptul de populare</summary>
+### 3.3. Date de exemplu
 
 ```sql
-INSERT ALL 
-  INTO autori VALUES (1, 'Mircea Eliade', 'Română', 1930)
-  INTO autori VALUES (2, 'Mihail Sadoveanu', 'Română', 1904)
-  INTO autori VALUES (3, 'George Orwell', 'Britanică', 1933)
-  INTO autori VALUES (4, 'Gabriel García Márquez', 'Columbiană', 1955)
-  INTO autori VALUES (5, 'Haruki Murakami', 'Japoneză', 1979)
-  INTO autori VALUES (6, 'Agatha Christie', 'Britanică', 1920)
-  INTO autori VALUES (7, 'Stephen King', 'Americană', 1974)
-  INTO autori VALUES (8, 'Elena Ferrante', 'Italiană', 1992)
-SELECT * FROM dual;
+-- Inserări în EMPLOYEES
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, SALARY, DEPARTMENT_ID)
+VALUES (100, 'Steven', 'King', 24000, 90);
 
-INSERT ALL
-  INTO carti VALUES (1, 'Maitreyi', 1, 'Roman', 45.00, 1933, 30)
-  INTO carti VALUES (2, 'Baltagul', 2, 'Roman', 38.00, 1930, 25)
-  INTO carti VALUES (3, '1984', 3, 'Distopie', 55.00, 1949, 50)
-  INTO carti VALUES (4, 'Ferma animalelor', 3, 'Satiră', 40.00, 1945, 40)
-  INTO carti VALUES (5, 'Un veac de singurătate', 4, 'Magic Realism', 75.00, 1967, 20)
-  INTO carti VALUES (6, 'Dragoste în vremea holerei', 4, 'Roman', 65.00, 1985, 15)
-  INTO carti VALUES (7, 'Norwegian Wood', 5, 'Roman', 60.00, 1987, 35)
-  INTO carti VALUES (8, 'Kafka pe malul mării', 5, 'Roman', 62.00, 2002, 28)
-  INTO carti VALUES (9, 'Crima din Orient Express', 6, 'Thriller', 42.00, 1934, 45)
-  INTO carti VALUES (10, 'Zece negri mititei', 6, 'Thriller', 44.00, 1939, 38)
-  INTO carti VALUES (11, 'It', 7, 'Horror', 90.00, 1986, 22)
-  INTO carti VALUES (12, 'Strălucirea', 7, 'Horror', 80.00, 1977, 18)
-  INTO carti VALUES (13, 'Prietena mea genială', 8, 'Roman', 55.00, 2011, 32)
-  INTO carti VALUES (14, 'Povestea noului nume', 8, 'Roman', 57.00, 2012, 27)
-SELECT * FROM dual;
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, SALARY, DEPARTMENT_ID)
+VALUES (101, 'Neena', 'Kochhar', 17000, 90);
 
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, SALARY, DEPARTMENT_ID)
+VALUES (200, 'Jennifer', 'Whalen', 4400, 20);
 
-INSERT ALL
-  INTO clienti VALUES (1, 'Andreea Popescu', 'andreea@email.ro', 'București', DATE '2022-03-10')
-  INTO clienti VALUES (2, 'Radu Ionescu', 'radu@email.ro', 'Cluj-Napoca', DATE '2022-07-22')
-  INTO clienti VALUES (3, 'Maria Constantin', 'maria@email.ro', 'Iași', DATE '2023-01-05')
-  INTO clienti VALUES (4, 'Vlad Dumitrescu', 'vlad@email.ro', 'București', DATE '2023-04-18')
-  INTO clienti VALUES (5, 'Ioana Gheorghe', 'ioana@email.ro', 'Timișoara', DATE '2023-09-30')
-  INTO clienti VALUES (6, 'Mihai Stan', 'mihai@email.ro', 'Cluj-Napoca', DATE '2024-01-15')
-  INTO clienti VALUES (7, 'Elena Marin', 'elena@email.ro', 'București', DATE '2024-02-28')
-  INTO clienti VALUES (8, 'Cristian Popa', 'cristian@email.ro', 'Brașov', DATE '2024-03-12')
-SELECT * FROM dual;
+-- Inserări în PROJECT
+INSERT INTO PROJECT (PROJECT_ID, PROJECT_NAME, BUDGET)
+VALUES (1, 'Website Redesign', 10000);
 
+INSERT INTO PROJECT (PROJECT_ID, PROJECT_NAME, BUDGET)
+VALUES (2, 'Mobile App', 10000);
 
-INSERT ALL
-  INTO comenzi VALUES (1, 1, DATE '2024-01-10', 'livrata', 95.00)
-  INTO comenzi VALUES (2, 2, DATE '2024-01-18', 'livrata', 115.00)
-  INTO comenzi VALUES (3, 3, DATE '2024-02-02', 'livrata', 75.00)
-  INTO comenzi VALUES (4, 1, DATE '2024-02-15', 'livrata', 140.00)
-  INTO comenzi VALUES (5, 4, DATE '2024-02-20', 'anulata', 55.00)
-  INTO comenzi VALUES (6, 5, DATE '2024-03-05', 'livrata', 122.00)
-  INTO comenzi VALUES (7, 2, DATE '2024-03-14', 'livrata', 90.00)
-  INTO comenzi VALUES (8, 6, DATE '2024-03-22', 'in_procesare', 62.00)
-  INTO comenzi VALUES (9, 7, DATE '2024-04-01', 'livrata', 80.00)
-  INTO comenzi VALUES (10, 3, DATE '2024-04-10', 'livrata', 65.00)
-  INTO comenzi VALUES (11, 8, DATE '2024-04-18', 'in_procesare', 44.00)
-  INTO comenzi VALUES (12, 1, DATE '2024-05-01', 'livrata', 60.00)
-SELECT * FROM dual;
+INSERT INTO PROJECT (PROJECT_ID, PROJECT_NAME, BUDGET)
+VALUES (3, 'Database Migration', 15000);
 
-INSERT ALL
-  INTO detalii_comanda VALUES (1, 3, 1, 55.00)  INTO detalii_comanda VALUES (1, 9, 1, 42.00)
-  INTO detalii_comanda VALUES (2, 7, 1, 60.00)  INTO detalii_comanda VALUES (2, 4, 1, 40.00)
-  INTO detalii_comanda VALUES (2, 9, 1, 42.00)  INTO detalii_comanda VALUES (3, 2, 1, 38.00)
-  INTO detalii_comanda VALUES (3, 1, 1, 45.00)  INTO detalii_comanda VALUES (4, 5, 1, 75.00)
-  INTO detalii_comanda VALUES (4, 8, 1, 62.00)  INTO detalii_comanda VALUES (5, 3, 1, 55.00)
-  INTO detalii_comanda VALUES (6, 6, 1, 65.00)  INTO detalii_comanda VALUES (6, 13, 1, 55.00)
-  INTO detalii_comanda VALUES (7, 11, 1, 90.00) INTO detalii_comanda VALUES (8, 8, 1, 62.00)
-  INTO detalii_comanda VALUES (9, 12, 1, 80.00) INTO detalii_comanda VALUES (10, 14, 1, 57.00)
-  INTO detalii_comanda VALUES (10, 1, 1, 45.00) INTO detalii_comanda VALUES (11, 10, 1, 44.00)
-  INTO detalii_comanda VALUES (12, 7, 1, 60.00)
-SELECT * FROM dual;
+INSERT INTO PROJECT (PROJECT_ID, PROJECT_NAME, BUDGET)
+VALUES (4, 'Cloud Infrastructure', 10000);
 
-INSERT ALL
-  INTO recenzii VALUES (1, 1, 3, 5, 'Absolut magistral!', DATE '2024-01-25')
-  INTO recenzii VALUES (2, 2, 7, 4, 'Atmosferă incredibilă.', DATE '2024-02-01')
-  INTO recenzii VALUES (3, 3, 2, 5, 'O capodoperă.', DATE '2024-02-15')
-  INTO recenzii VALUES (4, 1, 9, 4, 'Suspans de nota 10.', DATE '2024-03-01')
-  INTO recenzii VALUES (5, 4, 3, 3, 'Bun, dar așteptam mai mult.', DATE '2024-03-10')
-  INTO recenzii VALUES (6, 5, 6, 5, 'M-a emoționat profund.', DATE '2024-03-20')
-  INTO recenzii VALUES (7, 2, 4, 5, 'Satiră strălucitoare.', DATE '2024-03-28')
-  INTO recenzii VALUES (8, 6, 8, 4, 'Murakami la cel mai bun.', DATE '2024-04-05')
-  INTO recenzii VALUES (9, 7, 12, 3, 'Prea lung pentru gustul meu.', DATE '2024-04-12')
-  INTO recenzii VALUES (10, 3, 14, 5, 'Nu m-am putut opri din citit.', DATE '2024-04-22')
-  INTO recenzii VALUES (11, 8, 10, 4, 'Clasic bine construit.', DATE '2024-05-02')
-  INTO recenzii VALUES (12, 1, 5, 5, 'Schimbă percepția asupra vieții.', DATE '2024-05-10')
-SELECT * FROM dual;
+-- Inserări în WORKS_ON
+-- Angajatul 100 lucrează pe TOATE proiectele cu buget 10000
+INSERT INTO WORKS_ON (EMPLOYEE_ID, PROJECT_ID, HOURS_WORKED, ROLE)
+VALUES (100, 1, 40, 'Team Lead');
+
+INSERT INTO WORKS_ON (EMPLOYEE_ID, PROJECT_ID, HOURS_WORKED, ROLE)
+VALUES (100, 2, 35, 'Developer');
+
+INSERT INTO WORKS_ON (EMPLOYEE_ID, PROJECT_ID, HOURS_WORKED, ROLE)
+VALUES (100, 4, 30, 'Architect');
+
+-- Angajatul 101 lucrează pe UNELE proiecte cu buget 10000
+INSERT INTO WORKS_ON (EMPLOYEE_ID, PROJECT_ID, HOURS_WORKED, ROLE)
+VALUES (101, 1, 25, 'Developer');
+
+INSERT INTO WORKS_ON (EMPLOYEE_ID, PROJECT_ID, HOURS_WORKED, ROLE)
+VALUES (101, 3, 20, 'Tester');
+
+-- Angajatul 200 lucrează doar pe proiectul 3
+INSERT INTO WORKS_ON (EMPLOYEE_ID, PROJECT_ID, HOURS_WORKED, ROLE)
+VALUES (200, 3, 15, 'Analyst');
 ```
 
-</details>
-
----
-
-## 🧠 Înainte să începi — Regula de aur
-
-Înainte să scrii orice query, pune-ți această întrebare:
-
-```
-"Vreau UN SINGUR rând per grup de date   →  GROUP BY
- sau vreau RÂNDURI INDIVIDUALE?"          →  fără GROUP BY
-```
-
-**Semnale de GROUP BY:** *câți, câte, total, suma, media, maxim per X, minim per X*
-**Semnale fără GROUP BY:** *afișează, listează, găsește, detaliile, toți cei care...*
-
-> ⚠️ **Atenție la capcanele de limbaj:** cuvintele *„total"*, *„medie"* sau *„cel mai"* nu înseamnă **automat** GROUP BY. Uneori sunt doar subquery-uri de referință.
-
----
-
-## 🎯 Exerciții
-
----
-
-### #01 — Fără GROUP BY
-**Cerință:** Afișează titlul, genul literar și prețul tuturor cărților de tip „Roman".
-
-<details>
-<summary>💡 Gândire</summary>
-Vreau să văd fiecare carte în parte. Filtrez după gen, nu agreghez nimic.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
+### 3.4. Verificarea datelor
 
 ```sql
-SELECT titlu, gen_literar, pret
-FROM carti
-WHERE gen_literar = 'Roman'
-ORDER BY pret DESC;
+-- Proiectele cu buget 10000
+SELECT PROJECT_ID, PROJECT_NAME, BUDGET
+FROM PROJECT
+WHERE BUDGET = 10000;
+
+-- Rezultat: 3 proiecte (1, 2, 4)
+
+-- Verificare: pe câte proiecte cu buget 10000 lucrează fiecare angajat
+SELECT 
+    e.EMPLOYEE_ID,
+    e.FIRST_NAME || ' ' || e.LAST_NAME AS NUME_COMPLET,
+    COUNT(w.PROJECT_ID) AS NR_PROIECTE_BUGET_10000
+FROM EMPLOYEES e
+LEFT JOIN WORKS_ON w ON e.EMPLOYEE_ID = w.EMPLOYEE_ID
+LEFT JOIN PROJECT p ON w.PROJECT_ID = p.PROJECT_ID AND p.BUDGET = 10000
+GROUP BY e.EMPLOYEE_ID, e.FIRST_NAME, e.LAST_NAME;
+
+-- Rezultat așteptat:
+-- 100 | Steven King    | 3  ← lucrează pe TOATE cele 3 proiecte
+-- 101 | Neena Kochhar  | 1  ← lucrează doar pe 1 proiect
+-- 200 | Jennifer Whalen| 0  ← nu lucrează pe niciun proiect cu buget 10000
 ```
-</details>
 
 ---
 
-### #02 — Cu GROUP BY
-**Cerință:** Câte cărți există în fiecare gen literar?
+## 4. Metode de implementare DIVISION
 
-<details>
-<summary>💡 Gândire</summary>
-„Câte... per gen" = grupare pe gen + COUNT.
-</details>
+### 📌 Problema de referință
 
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT gen_literar, COUNT(*) AS nr_carti
-FROM carti
-GROUP BY gen_literar
-ORDER BY nr_carti DESC;
-```
-</details>
+> **Să se obțină codurile angajaților atașați TUTUROR proiectelor cu buget = 10000.**
 
 ---
 
-### #03 — Fără GROUP BY
-**Cerință:** Găsește cartea cu cel mai mic preț din librărie.
+### Metoda 1 — Dublu `NOT EXISTS` (Simulare directă ∀)
 
-<details>
-<summary>💡 Gândire</summary>
-Vreau UN singur rând — cartea ieftinistă. Minimul e un subquery de referință, nu o grupare.
-</details>
+#### 🔍 Logica pas cu pas
 
-<details>
-<summary>✅ Soluție</summary>
+1. **Cererea externă:** pentru fiecare angajat din `WORKS_ON`
+2. **Primul `NOT EXISTS`:** nu există niciun proiect cu budget=10000...
+3. **Al doilea `NOT EXISTS`:** ...pe care angajatul respectiv să NU lucreze
+
+#### 💻 Implementare SQL
 
 ```sql
-SELECT titlu, pret
-FROM carti
-WHERE pret = (SELECT MIN(pret) FROM carti);
+SELECT DISTINCT employee_id
+FROM works_on a
+WHERE NOT EXISTS (
+    -- Selectează toate proiectele cu budget = 10000
+    SELECT 1
+    FROM project p
+    WHERE p.budget = 10000
+    AND NOT EXISTS (
+        -- Verifică dacă angajatul curent lucrează pe acest proiect
+        SELECT 1
+        FROM works_on b
+        WHERE p.project_id = b.project_id
+          AND b.employee_id = a.employee_id
+    )
+);
 ```
-</details>
+
+#### 📊 Explicație detaliată cu exemplu
+
+**Pentru angajatul 100:**
+
+1. Oracle verifică: există vreun proiect cu budget=10000 pe care angajatul 100 NU lucrează?
+   - Proiectul 1: angajatul 100 lucrează? DA ✓
+   - Proiectul 2: angajatul 100 lucrează? DA ✓
+   - Proiectul 4: angajatul 100 lucrează? DA ✓
+2. Răspuns: NU există niciun proiect pe care să nu lucreze
+3. Concluzie: angajatul 100 **este inclus** în rezultat
+
+**Pentru angajatul 101:**
+
+1. Oracle verifică: există vreun proiect cu budget=10000 pe care angajatul 101 NU lucrează?
+   - Proiectul 1: angajatul 101 lucrează? DA ✓
+   - Proiectul 2: angajatul 101 lucrează? NU ✗
+   - **STOP** — am găsit un proiect pe care nu lucrează
+2. Răspuns: DA, există proiecte pe care nu lucrează
+3. Concluzie: angajatul 101 **NU este inclus** în rezultat
+
+#### ⚙️ Variante de optimizare
+
+```sql
+-- Variantă cu alias mai explicite
+SELECT DISTINCT angajat.employee_id
+FROM works_on angajat
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM project proiect_tinta
+    WHERE proiect_tinta.budget = 10000
+    AND NOT EXISTS (
+        SELECT 1
+        FROM works_on asociere
+        WHERE asociere.project_id = proiect_tinta.project_id
+          AND asociere.employee_id = angajat.employee_id
+    )
+);
+```
 
 ---
 
-### #04 — Cu GROUP BY
-**Cerință:** Care este prețul mediu al cărților per gen literar?
+### Metoda 2 — Simulare cu `COUNT`
 
-<details>
-<summary>💡 Gândire</summary>
-„Preț mediu... per gen" = grupare + AVG.
-</details>
+#### 🔍 Logica pas cu pas
 
-<details>
-<summary>✅ Soluție</summary>
+1. Filtrează din `WORKS_ON` doar înregistrările pentru proiectele cu budget=10000
+2. Grupează pe angajat și numără câte astfel de proiecte are fiecare
+3. Păstrează angajații care au numărul egal cu **totalul** proiectelor cu budget=10000
 
-```sql
-SELECT gen_literar,
-       ROUND(AVG(pret), 2) AS pret_mediu,
-       COUNT(*)            AS nr_carti
-FROM carti
-GROUP BY gen_literar
-ORDER BY pret_mediu DESC;
-```
-</details>
-
----
-
-### #05 — ⚠️ Capcană — Fără GROUP BY
-**Cerință:** Afișează toate comenzile unui client (Andreea Popescu), cu data și totalul fiecăreia.
-
-<details>
-<summary>💡 Gândire</summary>
-Mulți vor pune GROUP BY pentru că „e vorba de comenzi per client". Dar vreau lista detaliată a comenzilor, nu un total — deci rânduri individuale.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
+#### 💻 Implementare SQL
 
 ```sql
-SELECT c.id_comanda, c.data_comanda, c.status, c.total
-FROM comenzi c
-JOIN clienti cl ON c.id_client = cl.id_client
-WHERE cl.nume = 'Andreea Popescu'
-ORDER BY c.data_comanda;
-```
-</details>
-
----
-
-### #06 — Cu GROUP BY
-**Cerință:** Care este valoarea totală a comenzilor per client?
-
-<details>
-<summary>💡 Gândire</summary>
-„Total... per client" = grupare + SUM.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT cl.nume, COUNT(c.id_comanda) AS nr_comenzi, SUM(c.total) AS total_cheltuit
-FROM clienti cl
-LEFT JOIN comenzi c ON cl.id_client = c.id_client
-GROUP BY cl.id_client, cl.nume
-ORDER BY total_cheltuit DESC;
-```
-</details>
-
----
-
-### #07 — Fără GROUP BY
-**Cerință:** Lista tuturor recenziilor cu nota 5, împreună cu titlul cărții și numele clientului.
-
-<details>
-<summary>💡 Gândire</summary>
-Vreau să văd fiecare recenzie individuală. Filtrez pe notă, nu grupez.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT r.data_recenzie, cl.nume AS client, ca.titlu, r.nota, r.comentariu
-FROM recenzii r
-JOIN clienti cl ON r.id_client = cl.id_client
-JOIN carti   ca ON r.id_carte  = ca.id_carte
-WHERE r.nota = 5
-ORDER BY r.data_recenzie;
-```
-</details>
-
----
-
-### #08 — Cu GROUP BY
-**Cerință:** Care este nota medie primită de fiecare carte?
-
-<details>
-<summary>💡 Gândire</summary>
-„Notă medie... per carte" = grupare + AVG.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT ca.titlu,
-       ROUND(AVG(r.nota), 2) AS nota_medie,
-       COUNT(r.id_recenzie)  AS nr_recenzii
-FROM carti ca
-LEFT JOIN recenzii r ON ca.id_carte = r.id_carte
-GROUP BY ca.id_carte, ca.titlu
-ORDER BY nota_medie DESC;
-```
-</details>
-
----
-
-### #09 — Fără GROUP BY
-**Cerință:** Afișează cărțile cu stoc sub 25 de exemplare.
-
-<details>
-<summary>💡 Gândire</summary>
-Filtrare simplă pe o coloană numerică. Fiecare carte e un rând, nu calculez nimic per grup.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT titlu, stoc, pret
-FROM carti
-WHERE stoc < 25
-ORDER BY stoc;
-```
-</details>
-
----
-
-### #10 — Cu GROUP BY + HAVING
-**Cerință:** Care sunt autorii cu mai mult de o carte în librărie?
-
-<details>
-<summary>💡 Gândire</summary>
-„Câte cărți per autor" + filtrare pe acel număr = GROUP BY + HAVING.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT a.nume, COUNT(ca.id_carte) AS nr_carti
-FROM autori a
-JOIN carti ca ON a.id_autor = ca.id_autor
-GROUP BY a.id_autor, a.nume
-HAVING COUNT(ca.id_carte) > 1
-ORDER BY nr_carti DESC;
-```
-</details>
-
----
-
-### #11 — ⚠️ Capcană — Fără GROUP BY
-**Cerință:** Afișează clienții care au plasat cel puțin o comandă cu statusul „anulata".
-
-<details>
-<summary>💡 Gândire</summary>
-Verificare de existență, nu numărare. EXISTS sau IN e suficient — nu avem nevoie de GROUP BY.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT DISTINCT cl.nume, cl.email, cl.oras
-FROM clienti cl
-JOIN comenzi c ON cl.id_client = c.id_client
-WHERE c.status = 'anulata';
-```
-</details>
-
----
-
-### #12 — Cu GROUP BY
-**Cerință:** Câți clienți s-au înregistrat în fiecare an?
-
-<details>
-<summary>💡 Gândire</summary>
-„Câți... per an" = grupare pe an + COUNT.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT TO_CHAR(data_inregistrare, 'YYYY') AS an, 
-       COUNT(*) AS nr_clienti_noi
-FROM clienti
-GROUP BY TO_CHAR(data_inregistrare, 'YYYY')
-ORDER BY an;
-```
-</details>
-
----
-
-### #13 — Fără GROUP BY
-**Cerință:** Găsește toate cărțile scrise de autori britanici.
-
-<details>
-<summary>💡 Gândire</summary>
-JOIN simplu + filtrare pe naționalitate. Rânduri individuale de cărți.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT ca.titlu, a.nume AS autor, ca.an_publicare, ca.pret
-FROM carti ca
-JOIN autori a ON ca.id_autor = a.id_autor
-WHERE a.nationalitate = 'Britanică';
-```
-</details>
-
----
-
-### #14 — Cu GROUP BY
-**Cerință:** Care este venitul total generat de fiecare autor (prin vânzările din comenzi)?
-
-<details>
-<summary>💡 Gândire</summary>
-„Total venit... per autor" implică SUM prin mai multe join-uri — tot GROUP BY.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT a.nume AS autor,
-       SUM(dc.cantitate * dc.pret_unitar) AS venit_total
-FROM autori a
-JOIN carti          ca ON a.id_autor    = ca.id_autor
-JOIN detalii_comanda dc ON ca.id_carte  = dc.id_carte
-JOIN comenzi         c  ON dc.id_comanda = c.id_comanda
-WHERE c.status != 'anulata'
-GROUP BY a.id_autor, a.nume
-ORDER BY venit_total DESC;
-```
-</details>
-
----
-
-### #15 — ⚠️ Capcană — Fără GROUP BY
-**Cerință:** Afișează cărțile cu prețul mai mare decât media generală a prețurilor din librărie.
-
-<details>
-<summary>💡 Gândire</summary>
-„Media" apare, dar e doar un subquery de comparație. Vreau rânduri individuale de cărți, nu o statistică per grup.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT titlu, gen_literar, pret
-FROM carti
-WHERE pret > (SELECT AVG(pret) FROM carti)
-ORDER BY pret DESC;
-```
-</details>
-
----
-
-### #16 — Cu GROUP BY
-**Cerință:** Care este prețul minim, maxim și mediu al cărților per autor?
-
-<details>
-<summary>💡 Gândire</summary>
-Trei agregate per autor = GROUP BY cu MIN, MAX, AVG.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT a.nume,
-       MIN(ca.pret)              AS pret_minim,
-       MAX(ca.pret)              AS pret_maxim,
-       ROUND(AVG(ca.pret), 2)   AS pret_mediu
-FROM autori a
-JOIN carti ca ON a.id_autor = ca.id_autor
-GROUP BY a.id_autor, a.nume;
-```
-</details>
-
----
-
-### #17 — Fără GROUP BY
-**Cerință:** Afișează toate comenzile livrate din luna martie 2024, cu numele clientului.
-
-<details>
-<summary>💡 Gândire</summary>
-Filtrare pe dată și status. Fiecare comandă e un rând separat.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT c.id_comanda, cl.nume, c.data_comanda, c.total
-FROM comenzi c
-JOIN clienti cl ON c.id_client = cl.id_client
-WHERE c.status = 'livrata'
-  AND c.data_comanda BETWEEN DATE '2024-03-01' AND DATE '2024-03-31';
-```
-</details>
-
----
-
-### #18 — Cu GROUP BY
-**Cerință:** Câte comenzi livrate a plasat fiecare client din București?
-
-<details>
-<summary>💡 Gândire</summary>
-„Câte... per client" + filtrare = WHERE (oraș) + GROUP BY + COUNT.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT cl.nume, COUNT(c.id_comanda) AS nr_comenzi_livrate
-FROM clienti cl
-JOIN comenzi c ON cl.id_client = c.id_client
-WHERE cl.oras = 'București'
-  AND c.status = 'livrata'
-GROUP BY cl.id_client, cl.nume
-ORDER BY nr_comenzi_livrate DESC;
-```
-</details>
-
----
-
-### #19 — ⚠️ Capcană — Fără GROUP BY
-**Cerință:** Afișează detaliile fiecărei comenzi: ce cărți conține, cantitatea și prețul.
-
-<details>
-<summary>💡 Gândire</summary>
-Vreau linii detaliate din `detalii_comanda` — un rând per carte per comandă. Nu agreg nimic.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT c.id_comanda, c.data_comanda, cl.nume AS client,
-       ca.titlu, dc.cantitate, dc.pret_unitar,
-       dc.cantitate * dc.pret_unitar AS subtotal
-FROM comenzi c
-JOIN clienti          cl ON c.id_client   = cl.id_client
-JOIN detalii_comanda  dc ON c.id_comanda  = dc.id_comanda
-JOIN carti            ca ON dc.id_carte   = ca.id_carte
-ORDER BY c.id_comanda, ca.titlu;
-```
-</details>
-
----
-
-### #20 — Cu GROUP BY + HAVING
-**Cerință:** Care sunt cărțile cu o notă medie mai mare de 4?
-
-<details>
-<summary>💡 Gândire</summary>
-„Notă medie per carte" + filtrare pe medie = GROUP BY + HAVING (nu WHERE, fiindcă filtrăm un rezultat agregat).
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT ca.titlu, ROUND(AVG(r.nota), 2) AS nota_medie, COUNT(*) AS nr_recenzii
-FROM carti ca
-JOIN recenzii r ON ca.id_carte = r.id_carte
-GROUP BY ca.id_carte, ca.titlu
-HAVING AVG(r.nota) > 4
-ORDER BY nota_medie DESC;
-```
-</details>
-
----
-
-### #21 — Fără GROUP BY
-**Cerință:** Găsește clienții care NU au plasat nicio comandă.
-
-<details>
-<summary>💡 Gândire</summary>
-Verificare de absență cu LEFT JOIN sau NOT EXISTS. Nu numărăm nimic per grup.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT cl.nume, cl.email, cl.oras
-FROM clienti cl
-LEFT JOIN comenzi c ON cl.id_client = c.id_client
-WHERE c.id_comanda IS NULL;
-```
-</details>
-
----
-
-### #22 — Cu GROUP BY
-**Cerință:** Care este stocul total disponibil per gen literar?
-
-<details>
-<summary>💡 Gândire</summary>
-„Total stoc... per gen" = grupare + SUM.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT gen_literar, SUM(stoc) AS stoc_total, COUNT(*) AS nr_titluri
-FROM carti
-GROUP BY gen_literar
-ORDER BY stoc_total DESC;
-```
-</details>
-
----
-
-### #23 — Fără GROUP BY
-**Cerință:** Afișează cărțile publicate înainte de 1950, ordonate cronologic.
-
-<details>
-<summary>💡 Gândire</summary>
-Filtrare pe an, sortare. Rânduri individuale.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT titlu, an_publicare, pret, gen_literar
-FROM carti
-WHERE an_publicare < 1950
-ORDER BY an_publicare;
-```
-</details>
-
----
-
-### #24 — Cu GROUP BY
-**Cerință:** Câte recenzii a scris fiecare client și care e nota medie pe care o acordă?
-
-<details>
-<summary>💡 Gândire</summary>
-„Câte + medie... per client" = grupare + COUNT + AVG.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT cl.nume,
-       COUNT(r.id_recenzie)   AS nr_recenzii,
-       ROUND(AVG(r.nota), 2) AS nota_medie_acordata
-FROM clienti cl
-JOIN recenzii r ON cl.id_client = r.id_client
-GROUP BY cl.id_client, cl.nume
-ORDER BY nr_recenzii DESC;
-```
-</details>
-
----
-
-### #25 — ⚠️ Capcană — Fără GROUP BY
-**Cerință:** Afișează pentru fiecare carte procentul din stocul total al librăriei.
-
-<details>
-<summary>💡 Gândire</summary>
-„Procent" și „total" apar, dar fiecare carte rămâne un rând individual — totalul e un subquery de referință, nu o grupare.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT titlu, stoc,
-       ROUND(stoc * 100.0 / (SELECT SUM(stoc) FROM carti), 2) AS procent_din_stoc
-FROM carti
-ORDER BY procent_din_stoc DESC;
-```
-</details>
-
----
-
-### #26 — Cu GROUP BY
-**Cerință:** Care sunt orașele din care provin clienții și câți clienți are fiecare?
-
-<details>
-<summary>💡 Gândire</summary>
-„Câți... per oraș" = grupare pe oraș + COUNT.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT oras, COUNT(*) AS nr_clienti
-FROM clienti
-GROUP BY oras
-ORDER BY nr_clienti DESC;
-```
-</details>
-
----
-
-### #27 — Fără GROUP BY
-**Cerință:** Afișează toate cărțile împreună cu autorul lor și naționalitatea autorului.
-
-<details>
-<summary>💡 Gândire</summary>
-JOIN simplu pentru a adăuga context. Un rând per carte.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT ca.titlu, a.nume AS autor, a.nationalitate, ca.pret, ca.an_publicare
-FROM carti ca
-JOIN autori a ON ca.id_autor = a.id_autor
-ORDER BY a.nationalitate, ca.titlu;
-```
-</details>
-
----
-
-### #28 — Cu GROUP BY
-**Cerință:** Câte comenzi are fiecare status și care e valoarea lor totală?
-
-<details>
-<summary>💡 Gândire</summary>
-„Câte + total... per status" = grupare pe status + COUNT + SUM.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT status,
-       COUNT(*)       AS nr_comenzi,
-       SUM(total)     AS valoare_totala,
-       ROUND(AVG(total), 2) AS valoare_medie
-FROM comenzi
-GROUP BY status;
-```
-</details>
-
----
-
-### #29 — ⚠️ Capcană — Fără GROUP BY
-**Cerință:** Afișează cărțile care nu au primit nicio recenzie.
-
-<details>
-<summary>💡 Gândire</summary>
-Verificare de absență — LEFT JOIN + IS NULL sau NOT EXISTS. Nu numărăm per grup.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT ca.titlu, ca.gen_literar, ca.pret
-FROM carti ca
-LEFT JOIN recenzii r ON ca.id_carte = r.id_carte
-WHERE r.id_recenzie IS NULL;
-```
-</details>
-
----
-
-### #30 — Cu GROUP BY + HAVING
-**Cerință:** Care sunt autorii ale căror cărți au un preț mediu mai mare de 60 lei?
-
-<details>
-<summary>💡 Gândire</summary>
-„Preț mediu per autor" + filtrare pe medie = GROUP BY + HAVING.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT a.nume, ROUND(AVG(ca.pret), 2) AS pret_mediu_carti
-FROM autori a
-JOIN carti ca ON a.id_autor = ca.id_autor
-GROUP BY a.id_autor, a.nume
-HAVING AVG(ca.pret) > 60
-ORDER BY pret_mediu_carti DESC;
-```
-</details>
-
----
-
-### #31 — Fără GROUP BY
-**Cerință:** Afișează top 3 cele mai scumpe cărți din librărie.
-
-<details>
-<summary>💡 Gândire</summary>
-Sortare + LIMIT. Nu grupez — aleg rânduri individuale.
-</details>
-
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT titlu, gen_literar, pret
-FROM carti
-ORDER BY pret DESC
-FETCH FIRST 3 ROWS ONLY;
-
-SELECT *
-FROM (
-    SELECT titlu, gen_literar, pret
-    FROM carti
-    ORDER BY pret DESC
+SELECT employee_id
+FROM works_on
+WHERE project_id IN (
+    SELECT project_id
+    FROM project
+    WHERE budget = 10000
 )
-WHERE ROWNUM <= 3;
+GROUP BY employee_id
+HAVING COUNT(project_id) = (
+    SELECT COUNT(*)
+    FROM project
+    WHERE budget = 10000
+);
 ```
-</details>
+
+#### 📊 Explicație detaliată
+
+**Pasul 1 - Filtrare:**
+
+```sql
+-- Rezultatul clauzei WHERE
+SELECT employee_id, project_id
+FROM works_on
+WHERE project_id IN (SELECT project_id FROM project WHERE budget = 10000);
+
+-- Rezultat:
+-- 100 | 1
+-- 100 | 2
+-- 100 | 4
+-- 101 | 1
+```
+
+**Pasul 2 - Grupare și numărare:**
+
+```sql
+-- După GROUP BY și COUNT
+-- 100 | 3 proiecte
+-- 101 | 1 proiect
+```
+
+**Pasul 3 - Filtrare cu HAVING:**
+
+```sql
+-- Total proiecte cu budget 10000: 3
+-- Păstrăm doar angajații cu COUNT = 3
+-- Rezultat final: 100
+```
+
+#### ⚠️ Atenție la capcane!
+
+```sql
+-- ❌ GREȘIT - numără TOATE proiectele angajatului, nu doar cele cu buget 10000
+SELECT employee_id
+FROM works_on
+GROUP BY employee_id
+HAVING COUNT(project_id) = (
+    SELECT COUNT(*) FROM project WHERE budget = 10000
+);
+
+-- Problemă: dacă angajatul are 3 proiecte în total, dar doar 1 cu buget 10000,
+-- va fi totuși inclus în rezultat (pentru că 3 = 3)!
+
+-- ✅ CORECT - filtrare înainte de grupare
+SELECT employee_id
+FROM works_on
+WHERE project_id IN (SELECT project_id FROM project WHERE budget = 10000)
+GROUP BY employee_id
+HAVING COUNT(project_id) = (SELECT COUNT(*) FROM project WHERE budget = 10000);
+```
+
+#### 🎯 Variantă cu JOIN explicit
+
+```sql
+SELECT w.employee_id
+FROM works_on w
+JOIN project p ON w.project_id = p.project_id
+WHERE p.budget = 10000
+GROUP BY w.employee_id
+HAVING COUNT(DISTINCT w.project_id) = (
+    SELECT COUNT(*)
+    FROM project
+    WHERE budget = 10000
+);
+```
 
 ---
 
-### #32 — Cu GROUP BY
-**Cerință:** Top 3 clienți după valoarea totală cumpărată (doar comenzi livrate).
+### Metoda 3 — Operatorul `MINUS` (Diferență de mulțimi)
 
-<details>
-<summary>💡 Gândire</summary>
-„Total per client" + top = GROUP BY + SUM + ORDER BY + LIMIT.
-</details>
+#### 🔍 Logica pas cu pas
 
-<details>
-<summary>✅ Soluție</summary>
+1. Generează **toate combinațiile posibile** (produs cartezian) între angajați și proiecte cu budget=10000
+2. Scade din ele combinațiile care **există deja** în `WORKS_ON`
+3. Rezultatul = combinații care **lipsesc** (angajați care NU acoperă toate proiectele)
+4. Scade acești angajați din toți angajații → rămân cei care acoperă **toate** proiectele
+
+#### 💻 Implementare SQL
 
 ```sql
-SELECT cl.nume, SUM(c.total) AS total_achizitionat
-FROM clienti cl
-JOIN comenzi c ON cl.id_client = c.id_client
-WHERE c.status = 'livrata'
-GROUP BY cl.id_client, cl.nume
-ORDER BY total_achizitionat DESC
-FETCH FIRST 3 ROWS ONLY;
+-- Toți angajații care apar în works_on
+SELECT DISTINCT employee_id
+FROM works_on
+
+MINUS
+
+-- Angajații care NU acoperă toate proiectele (au combinații lipsă)
+SELECT employee_id
+FROM (
+    -- Toate combinațiile posibile angajat × proiect_cu_buget_10000
+    SELECT e.employee_id, p.project_id
+    FROM (SELECT DISTINCT employee_id FROM works_on) e
+    CROSS JOIN (SELECT project_id FROM project WHERE budget = 10000) p
+    
+    MINUS
+    
+    -- Combinațiile care există deja în works_on
+    SELECT employee_id, project_id
+    FROM works_on
+) combinatii_lipsa;
 ```
-</details>
+
+#### 📊 Explicație cu date concrete
+
+**Date inițiale:**
+
+- Angajați în works_on: {100, 101, 200}
+- Proiecte cu budget 10000: {1, 2, 4}
+
+**Pasul 1 - Produs cartezian (toate combinațiile posibile):**
+
+```
+100 × 1
+100 × 2
+100 × 4
+101 × 1
+101 × 2
+101 × 4
+200 × 1
+200 × 2
+200 × 4
+```
+
+**Pasul 2 - Combinații existente în works_on:**
+
+```
+100 × 1 ✓
+100 × 2 ✓
+100 × 4 ✓
+101 × 1 ✓
+```
+
+**Pasul 3 - Combinații lipsă (MINUS):**
+
+```
+101 × 2  ← lipsă
+101 × 4  ← lipsă
+200 × 1  ← lipsă
+200 × 2  ← lipsă
+200 × 4  ← lipsă
+```
+
+**Pasul 4 - Angajați cu combinații lipsă:**
+
+```
+{101, 200}
+```
+
+**Pasul 5 - Toți angajații MINUS cei cu combinații lipsă:**
+
+```
+{100, 101, 200} MINUS {101, 200} = {100}
+```
+
+#### 🎯 Variantă simplificată
+
+```sql
+-- Versiune mai compactă
+SELECT DISTINCT employee_id FROM works_on
+MINUS
+SELECT employee_id
+FROM (
+    SELECT employee_id, project_id
+    FROM (SELECT DISTINCT employee_id FROM works_on),
+         (SELECT project_id FROM project WHERE budget = 10000)
+    MINUS
+    SELECT employee_id, project_id FROM works_on
+);
+```
 
 ---
 
-### #33 — Fără GROUP BY
-**Cerință:** Găsește autorul cu cel mai vechi debut literar.
+### Metoda 4 — `NOT EXISTS` cu `MINUS` (Includere de mulțimi)
 
-<details>
-<summary>💡 Gândire</summary>
-Vreau UN autor. Minimul e subquery de referință.
-</details>
+#### 🔍 Logica matematică
 
-<details>
-<summary>✅ Soluție</summary>
+Verificăm relația de **includere**: `A ⊇ B`
+
+Dacă mulțimea proiectelor angajatului **include** mulțimea proiectelor cu budget 10000, atunci:
+
+```
+B ⊆ A  ⟺  B \ A = ∅
+```
+
+**Traducere:** "Dacă diferența (proiecte_budget_10000 − proiecte_angajat) este vidă, atunci angajatul acoperă toate proiectele."
+
+#### 💻 Implementare SQL
 
 ```sql
-SELECT nume, nationalitate, an_debut
-FROM autori
-WHERE an_debut = (SELECT MIN(an_debut) FROM autori);
+SELECT DISTINCT employee_id
+FROM works_on a
+WHERE NOT EXISTS (
+    -- Proiectele cu budget = 10000
+    (SELECT project_id FROM project WHERE budget = 10000)
+    
+    MINUS
+    
+    -- Proiectele pe care lucrează angajatul curent
+    (SELECT project_id
+     FROM works_on b
+     WHERE b.employee_id = a.employee_id)
+);
 ```
-</details>
+
+#### 📊 Explicație detaliată
+
+**Pentru angajatul 100:**
+
+```sql
+-- Proiecte cu budget 10000: {1, 2, 4}
+-- Proiecte pe care lucrează angajatul 100: {1, 2, 4, ...}
+-- Diferența: {1, 2, 4} MINUS {1, 2, 4, ...} = ∅ (mulțime vidă)
+-- NOT EXISTS(∅) = TRUE → angajatul 100 este inclus
+```
+
+**Pentru angajatul 101:**
+
+```sql
+-- Proiecte cu budget 10000: {1, 2, 4}
+-- Proiecte pe care lucrează angajatul 101: {1, 3}
+-- Diferența: {1, 2, 4} MINUS {1, 3} = {2, 4} ≠ ∅
+-- NOT EXISTS({2, 4}) = FALSE → angajatul 101 NU este inclus
+```
+
+#### 🎯 Variantă cu JOIN
+
+```sql
+SELECT DISTINCT a.employee_id
+FROM works_on a
+WHERE NOT EXISTS (
+    SELECT p.project_id
+    FROM project p
+    WHERE p.budget = 10000
+    MINUS
+    SELECT w.project_id
+    FROM works_on w
+    WHERE w.employee_id = a.employee_id
+);
+```
 
 ---
 
-### #34 — Cu GROUP BY
-**Cerință:** Câte cărți diferite au fost comandate în fiecare lună din 2024?
+### 📊 Comparație metode — Performanță și claritate
 
-<details>
-<summary>💡 Gândire</summary>
-„Câte... per lună" = grupare pe lună + COUNT DISTINCT (ca să nu numărăm aceeași carte de mai multe ori).
-</details>
+| Metodă | Complexitate citire | Performanță | Când să folosești |
+|--------|-------------------|-------------|-------------------|
+| **1. Dublu NOT EXISTS** | Medie | Bună | Când vrei logică clară și directă |
+| **2. COUNT** | Ușoară | Foarte bună | Când ai nevoie de claritate maximă |
+| **3. MINUS dublu** | Grea | Medie | Când vrei să înveți algebra relațională |
+| **4. NOT EXISTS + MINUS** | Medie-Grea | Bună | Când gândești în termeni de mulțimi |
 
-<details>
-<summary>✅ Soluție</summary>
+#### 💡 Recomandări practice
 
-```sql
-SELECT EXTRACT(MONTH FROM c.data_comanda) AS luna,
-       COUNT(DISTINCT dc.id_carte) AS nr_titluri_distincte,
-       SUM(dc.cantitate)           AS total_exemplare
-FROM comenzi c
-JOIN detalii_comanda dc ON c.id_comanda = dc.id_comanda
-WHERE EXTRACT(YEAR FROM c.data_comanda) = 2024
-GROUP BY EXTRACT(MONTH FROM c.data_comanda)
-ORDER BY luna;
-```
-</details>
+- **Pentru începători:** Metoda 2 (COUNT) — cea mai intuitivă
+- **Pentru interviuri:** Metoda 1 (dublu NOT EXISTS) — cea mai clasică
+- **Pentru optimizare:** Testează cu `EXPLAIN PLAN` — performanța variază cu distribuția datelor
+- **Pentru mentenanță:** Metoda 2 (COUNT) — cea mai ușor de înțeles de alți developeri
 
 ---
 
-### #35 — ⚠️ Capcană — Fără GROUP BY
-**Cerință:** Afișează clienții care au comandat cartea „1984".
+## 5. Exerciții ghidate DIVISION
 
-<details>
-<summary>💡 Gândire</summary>
-Mulți vor face GROUP BY pe client. Dar vrem lista de clienți care au comandat această carte — DISTINCT e suficient, nu agregăm.
-</details>
+### 5.1. Compararea mulțimilor — Reguli fundamentale
 
-<details>
-<summary>✅ Soluție</summary>
-
-```sql
-SELECT DISTINCT cl.nume, cl.oras
-FROM clienti cl
-JOIN comenzi          c  ON cl.id_client  = c.id_client
-JOIN detalii_comanda  dc ON c.id_comanda  = dc.id_comanda
-JOIN carti            ca ON dc.id_carte   = ca.id_carte
-WHERE ca.titlu = '1984';
 ```
-</details>
+A ⊇ B  (A include B / cel puțin)     ≡  B \ A = ∅
+A ⊆ B  (A inclus în B / cel mult)    ≡  A \ B = ∅
+A = B  (egalitate / exact)           ≡  A \ B = ∅  ȘI  B \ A = ∅
+A ∩ B ≠ ∅  (au elemente comune)      ≡  EXISTS (SELECT ... INTERSECT ...)
+A ∩ B = ∅  (disjuncte)               ≡  NOT EXISTS (SELECT ... INTERSECT ...)
+```
 
 ---
 
-### #36 — Cu GROUP BY
-**Cerință:** Care e numărul total de exemplare vândute per carte (din comenzi livrate)?
+### 5.2. Exercițiul 1: Cel puțin (⊇)
 
-<details>
-<summary>💡 Gândire</summary>
-„Total exemplare... per carte" = grupare + SUM.
-</details>
+> **Găsiți angajații care au lucrat CEL PUȚIN pe aceleași proiecte ca angajatul 200.**
+>
+> *(mulțimea_angajat ⊇ mulțimea_angajat_200)*
 
-<details>
-<summary>✅ Soluție</summary>
+#### Soluția 1 — NOT EXISTS cu MINUS
 
 ```sql
-SELECT ca.titlu, SUM(dc.cantitate) AS exemplare_vandute
-FROM carti ca
-JOIN detalii_comanda dc ON ca.id_carte  = dc.id_carte
-JOIN comenzi         c  ON dc.id_comanda = c.id_comanda
-WHERE c.status = 'livrata'
-GROUP BY ca.id_carte, ca.titlu
-ORDER BY exemplare_vandute DESC;
+SELECT DISTINCT a.employee_id
+FROM works_on a
+WHERE NOT EXISTS (
+    -- Proiectele angajatului 200
+    (SELECT project_id FROM works_on WHERE employee_id = 200)
+    
+    MINUS
+    
+    -- Proiectele angajatului curent
+    (SELECT project_id FROM works_on WHERE employee_id = a.employee_id)
+);
 ```
-</details>
+
+#### Explicație:
+
+- Angajatul 200 lucrează pe proiectele {3}
+- Pentru ca un angajat X să fie inclus, mulțimea lui trebuie să includă {3}
+- Verificăm: {3} MINUS {proiecte_X} = ∅?
+
+#### Soluția 2 — Dublu NOT EXISTS
+
+```sql
+SELECT DISTINCT a.employee_id
+FROM works_on a
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM works_on ref
+    WHERE ref.employee_id = 200
+    AND NOT EXISTS (
+        SELECT 1
+        FROM works_on b
+        WHERE b.employee_id = a.employee_id
+          AND b.project_id = ref.project_id
+    )
+);
+```
+
+#### Soluția 3 — COUNT
+
+```sql
+SELECT w.employee_id
+FROM works_on w
+WHERE w.project_id IN (
+    SELECT project_id FROM works_on WHERE employee_id = 200
+)
+GROUP BY w.employee_id
+HAVING COUNT(DISTINCT w.project_id) = (
+    SELECT COUNT(DISTINCT project_id)
+    FROM works_on
+    WHERE employee_id = 200
+);
+```
+
+#### 📊 Rezultat așteptat:
+
+Cu datele noastre:
+- Angajatul 200: {3}
+- Angajatul 100: {1, 2, 4} — include {3}? NU
+- Angajatul 101: {1, 3} — include {3}? DA ✓
+
+**Rezultat:** {101, 200}
 
 ---
 
-### #37 — Fără GROUP BY
-**Cerință:** Afișează recenziile scrise în aprilie 2024, cu cartea și clientul aferent.
+### 5.3. Exercițiul 2: Cel mult (⊆)
 
-<details>
-<summary>💡 Gândire</summary>
-Filtrare pe dată, rânduri individuale de recenzii.
-</details>
+> **Găsiți angajații care au lucrat CEL MULT pe aceleași proiecte ca angajatul 200.**
+>
+> *(mulțimea_angajat ⊆ mulțimea_angajat_200)*
 
-<details>
-<summary>✅ Soluție</summary>
+#### Soluție — NOT EXISTS cu MINUS (inversare)
 
 ```sql
-SELECT r.data_recenzie, cl.nume AS client, ca.titlu, r.nota, r.comentariu
-FROM recenzii r
-JOIN clienti cl ON r.id_client = cl.id_client
-JOIN carti   ca ON r.id_carte  = ca.id_carte
-WHERE r.data_recenzie BETWEEN DATE '2024-04-01' AND DATE '2024-04-30'
-ORDER BY r.data_recenzie;
+SELECT DISTINCT a.employee_id
+FROM works_on a
+WHERE NOT EXISTS (
+    -- Proiectele angajatului curent
+    (SELECT project_id FROM works_on WHERE employee_id = a.employee_id)
+    
+    MINUS
+    
+    -- Proiectele angajatului 200
+    (SELECT project_id FROM works_on WHERE employee_id = 200)
+);
 ```
-</details>
+
+#### Explicație:
+
+- Verificăm: {proiecte_X} MINUS {3} = ∅?
+- Dacă DA → angajatul X lucrează doar pe subset-ul {3}
+
+#### 📊 Rezultat așteptat:
+
+- Angajatul 100: {1, 2, 4} MINUS {3} = {1, 2, 4} ≠ ∅ → NU
+- Angajatul 101: {1, 3} MINUS {3} = {1} ≠ ∅ → NU
+- Angajatul 200: {3} MINUS {3} = ∅ → DA ✓
+
+**Dacă am avea un angajat care lucrează DOAR pe proiectul 3 sau pe o submulțime a {3}, acela ar fi inclus.**
 
 ---
 
-### #38 — Cu GROUP BY
-**Cerință:** Câte recenzii a primit fiecare gen literar și care e media notelor?
+### 5.4. Exercițiul 3: Exact (=)
 
-<details>
-<summary>💡 Gândire</summary>
-Join-uri pentru a ajunge la gen, apoi „total recenzii + medie... per gen" = GROUP BY.
-</details>
+> **Găsiți angajații care au lucrat pe EXACT aceleași proiecte ca angajatul 200.**
+>
+> *(A = B ≡ A ⊇ B ȘI A ⊆ B)*
 
-<details>
-<summary>✅ Soluție</summary>
+#### Soluție — Combinare ⊇ și ⊆
 
 ```sql
-SELECT ca.gen_literar,
-       COUNT(r.id_recenzie)   AS nr_recenzii,
-       ROUND(AVG(r.nota), 2) AS nota_medie
-FROM carti ca
-JOIN recenzii r ON ca.id_carte = r.id_carte
-GROUP BY ca.gen_literar
-ORDER BY nota_medie DESC;
+SELECT DISTINCT a.employee_id
+FROM works_on a
+WHERE NOT EXISTS (
+    -- A ⊇ B: mulțimea_200 \ mulțimea_a = ∅
+    (SELECT project_id FROM works_on WHERE employee_id = 200)
+    MINUS
+    (SELECT project_id FROM works_on WHERE employee_id = a.employee_id)
+)
+AND NOT EXISTS (
+    -- A ⊆ B: mulțimea_a \ mulțimea_200 = ∅
+    (SELECT project_id FROM works_on WHERE employee_id = a.employee_id)
+    MINUS
+    (SELECT project_id FROM works_on WHERE employee_id = 200)
+)
+AND a.employee_id != 200;  -- excludem angajatul de referință
 ```
-</details>
+
+#### Soluție alternativă — Folosind INTERSECT
+
+```sql
+-- Variantă cu INTERSECT pentru verificare de egalitate
+WITH proiecte_200 AS (
+    SELECT project_id FROM works_on WHERE employee_id = 200
+)
+SELECT DISTINCT w.employee_id
+FROM works_on w
+GROUP BY w.employee_id
+HAVING 
+    -- Același număr de proiecte
+    COUNT(DISTINCT w.project_id) = (SELECT COUNT(*) FROM proiecte_200)
+    AND
+    -- Toate proiectele sunt în mulțimea de referință
+    COUNT(DISTINCT w.project_id) = (
+        SELECT COUNT(*)
+        FROM works_on w2
+        WHERE w2.employee_id = w.employee_id
+          AND w2.project_id IN (SELECT project_id FROM proiecte_200)
+    )
+    AND w.employee_id != 200;
+```
 
 ---
 
-### #39 — ⚠️ Capcană — Fără GROUP BY
-**Cerință:** Afișează autorii care au cel puțin o carte cu prețul sub 45 lei.
+### 5.5. Exercițiul 4: DIVISION pe alte criterii
 
-<details>
-<summary>💡 Gândire</summary>
-Mulți vor număra cărțile ieftine per autor. Dar vrem doar să știm că **există** cel puțin una — EXISTS e suficient.
-</details>
+> **Găsiți angajații care au lucrat pe toate proiectele pe care a lucrat managerul lor.**
 
-<details>
-<summary>✅ Soluție</summary>
+#### Date suplimentare necesare:
 
 ```sql
-SELECT DISTINCT a.nume, a.nationalitate
-FROM autori a
+-- Presupunem că avem și relația manager-angajat în EMPLOYEES
+ALTER TABLE EMPLOYEES ADD CONSTRAINT emp_manager_fk
+    FOREIGN KEY (MANAGER_ID) REFERENCES EMPLOYEES(EMPLOYEE_ID);
+```
+
+#### Soluție:
+
+```sql
+SELECT DISTINCT w1.employee_id
+FROM works_on w1
+JOIN employees e ON w1.employee_id = e.employee_id
+WHERE e.manager_id IS NOT NULL
+AND NOT EXISTS (
+    -- Proiectele managerului
+    (SELECT project_id 
+     FROM works_on 
+     WHERE employee_id = e.manager_id)
+    
+    MINUS
+    
+    -- Proiectele angajatului curent
+    (SELECT project_id 
+     FROM works_on 
+     WHERE employee_id = w1.employee_id)
+);
+```
+
+---
+
+### 5.6. Exercițiul 5: DIVISION cu JOIN
+
+> **Găsiți departamentele în care toți angajații au salariu > 5000.**
+
+#### Soluție cu dublu NOT EXISTS:
+
+```sql
+SELECT DISTINCT d.department_id, d.department_name
+FROM departments d
 WHERE EXISTS (
-    SELECT 1 FROM carti ca
-    WHERE ca.id_autor = a.id_autor
-      AND ca.pret < 45
+    -- Departamentul are cel puțin un angajat
+    SELECT 1 FROM employees WHERE department_id = d.department_id
+)
+AND NOT EXISTS (
+    -- Nu există angajat în departament cu salariu <= 5000
+    SELECT 1
+    FROM employees e
+    WHERE e.department_id = d.department_id
+      AND e.salary <= 5000
+);
+```
+
+#### Soluție cu agregare:
+
+```sql
+SELECT department_id, department_name
+FROM departments d
+WHERE department_id IN (
+    SELECT department_id
+    FROM employees
+    GROUP BY department_id
+    HAVING MIN(salary) > 5000
+);
+```
+
+---
+
+## 6. Vizualizări (VIEW) - Concepte fundamentale
+
+### 6.1. Ce este o vizualizare?
+
+O **vizualizare (VIEW)** este un **tabel virtual** definit printr-o interogare `SELECT`. Nu stochează date proprii — datele sunt extrase dinamic din tabelele de bază la fiecare accesare.
+
+#### 🎯 Analogie
+
+Gândește-te la VIEW ca la un **"filter Snapchat"** peste o fotografie:
+- Fotografia originală = tabelul de bază
+- Filtrul = definiția VIEW-ului
+- Rezultatul = datele vizibile prin VIEW
+
+### 6.2. De ce folosim vizualizări?
+
+| Beneficiu | Exemplu |
+|-----------|---------|
+| **Securitate** | Restricționează accesul la coloane sensibile (ex: salary) |
+| **Simplificare** | Ascunde JOIN-uri complexe — utilizatorul vede un tabel simplu |
+| **Independență date** | Modifici structura tabelului, VIEW rămâne neschimbat |
+| **Prezentări multiple** | Aceleași date, perspective diferite pentru departamente |
+| **Reutilizare** | Interogări frecvente salvate ca VIEW-uri |
+
+### 6.3. Tipuri de vizualizări
+
+```
+VIZUALIZĂRI
+    │
+    ├── SIMPLE
+    │   ├── Bazate pe 1 tabel
+    │   ├── Fără GROUP BY, DISTINCT, funcții agregat
+    │   └── LMD (INSERT/UPDATE/DELETE) permis ✓
+    │
+    └── COMPLEXE
+        ├── Bazate pe multiple tabele (JOIN)
+        ├── Conțin GROUP BY, HAVING, DISTINCT
+        ├── Conțin funcții agregat (SUM, AVG, COUNT etc.)
+        └── LMD restricționat sau interzis ✗
+```
+
+---
+
+## 7. Crearea și gestionarea vizualizărilor
+
+### 7.1. Sintaxa CREATE VIEW
+
+```sql
+CREATE [OR REPLACE] [FORCE | NOFORCE] VIEW nume_vizualizare 
+    [(alias_coloana1, alias_coloana2, ...)]
+AS 
+    subcerere
+[WITH CHECK OPTION [CONSTRAINT nume_constrangere]]
+[WITH READ ONLY [CONSTRAINT nume_constrangere]];
+```
+
+### 7.2. Opțiuni explicate
+
+| Opțiune | Descriere | Exemplu de utilizare |
+|---------|-----------|---------------------|
+| `OR REPLACE` | Recrează VIEW-ul fără să piardă privilegiile acordate | Modificări la definiție |
+| `FORCE` | Creează VIEW chiar dacă tabelele de bază nu există | Scripturi de deploy |
+| `NOFORCE` | (implicit) Crearea eșuează dacă tabelele lipsesc | Dezvoltare normală |
+| `WITH CHECK OPTION` | INSERT/UPDATE acceptate doar pentru linii vizibile în VIEW | Integritate date |
+| `WITH READ ONLY` | Interzice orice operație LMD (INSERT/UPDATE/DELETE) | VIEW-uri de raportare |
+
+---
+
+### 7.3. Exemplu 1: Vizualizare simplă
+
+```sql
+-- Creăm un VIEW cu angajații din departamentul 20
+CREATE VIEW emp_dept20 AS
+    SELECT employee_id, first_name, last_name, salary, email
+    FROM employees
+    WHERE department_id = 20;
+
+-- Interogare
+SELECT * FROM emp_dept20;
+
+-- Rezultat: doar angajații cu department_id = 20
+```
+
+#### Testare operații LMD:
+
+```sql
+-- ✅ INSERT permis (VIEW simplu)
+INSERT INTO emp_dept20 (employee_id, first_name, last_name, salary, email, department_id)
+VALUES (999, 'Test', 'User', 5000, 'test@example.com', 20);
+
+-- ✅ UPDATE permis
+UPDATE emp_dept20 
+SET salary = salary * 1.1 
+WHERE employee_id = 999;
+
+-- ✅ DELETE permis
+DELETE FROM emp_dept20 WHERE employee_id = 999;
+```
+
+---
+
+### 7.4. Exemplu 2: VIEW cu alias pe coloane
+
+```sql
+-- Metoda 1: Alias în SELECT
+CREATE VIEW emp_salarii AS
+    SELECT 
+        employee_id AS cod,
+        first_name || ' ' || last_name AS nume_complet,
+        salary * 12 AS salariu_anual,
+        salary * 12 * 1.19 AS salariu_anual_brut
+    FROM employees;
+
+-- Metoda 2: Alias în definiția VIEW
+CREATE VIEW emp_salarii_v2 (cod, nume_complet, salariu_anual, salariu_anual_brut) AS
+    SELECT 
+        employee_id,
+        first_name || ' ' || last_name,
+        salary * 12,
+        salary * 12 * 1.19
+    FROM employees;
+
+-- Interogare
+SELECT * FROM emp_salarii WHERE salariu_anual > 100000;
+```
+
+#### ⚠️ Atenție:
+
+```sql
+-- ❌ Nu poți actualiza coloane calculate
+UPDATE emp_salarii SET salariu_anual = 120000 WHERE cod = 100;
+-- ORA-01733: virtual column not allowed here
+
+-- ✅ Trebuie să actualizezi tabelul de bază
+UPDATE employees SET salary = 120000/12 WHERE employee_id = 100;
+```
+
+---
+
+### 7.5. Exemplu 3: VIEW cu JOIN (vizualizare complexă)
+
+```sql
+CREATE VIEW emp_dept_view AS
+    SELECT 
+        e.employee_id,
+        e.first_name,
+        e.last_name,
+        e.salary,
+        e.department_id,
+        d.department_name,
+        d.location_id,
+        l.city,
+        l.country_id
+    FROM employees e
+    JOIN departments d ON e.department_id = d.department_id
+    JOIN locations l ON d.location_id = l.location_id;
+
+-- Interogare simplă pentru utilizatori
+SELECT employee_id, first_name, department_name, city
+FROM emp_dept_view
+WHERE city = 'Seattle';
+```
+
+#### Key-preserved tables:
+
+- `EMPLOYEES` este **key-preserved** (employee_id unic în VIEW)
+- `DEPARTMENTS` **NU** este key-preserved (department_id se repetă)
+- `LOCATIONS` **NU** este key-preserved
+
+```sql
+-- ✅ UPDATE pe tabel key-preserved (EMPLOYEES)
+UPDATE emp_dept_view 
+SET salary = 9000 
+WHERE employee_id = 100;
+
+-- ❌ UPDATE pe tabel non-key-preserved (DEPARTMENTS)
+UPDATE emp_dept_view 
+SET department_name = 'New Name' 
+WHERE employee_id = 100;
+-- ORA-01779: cannot modify a column which maps to a non key-preserved table
+```
+
+---
+
+### 7.6. Exemplu 4: VIEW cu funcții agregat
+
+```sql
+CREATE VIEW dept_statistics AS
+    SELECT 
+        d.department_id,
+        d.department_name,
+        COUNT(e.employee_id) AS nr_angajati,
+        AVG(e.salary) AS salariu_mediu,
+        MIN(e.salary) AS salariu_minim,
+        MAX(e.salary) AS salariu_maxim,
+        SUM(e.salary) AS total_salarii
+    FROM departments d
+    LEFT JOIN employees e ON d.department_id = e.department_id
+    GROUP BY d.department_id, d.department_name;
+
+-- Interogare
+SELECT * 
+FROM dept_statistics 
+WHERE nr_angajati > 5
+ORDER BY salariu_mediu DESC;
+```
+
+#### ⚠️ Limitări:
+
+```sql
+-- ❌ Nu poți face INSERT/UPDATE/DELETE pe VIEW cu GROUP BY
+INSERT INTO dept_statistics (department_id, department_name, nr_angajati)
+VALUES (999, 'Test Dept', 0);
+-- ORA-01732: data manipulation operation not legal on this view
+```
+
+---
+
+### 7.7. Exemplu 5: WITH CHECK OPTION
+
+```sql
+-- VIEW pentru departamentul 20 cu WITH CHECK OPTION
+CREATE VIEW emp_dept20_checked AS
+    SELECT employee_id, first_name, last_name, email, salary, department_id
+    FROM employees
+    WHERE department_id = 20
+WITH CHECK OPTION CONSTRAINT emp_dept20_ck;
+
+-- ✅ UPDATE care păstrează department_id = 20
+UPDATE emp_dept20_checked 
+SET salary = 6000 
+WHERE employee_id = 202;
+-- Succes
+
+-- ❌ UPDATE care schimbă department_id (scoate linia din VIEW)
+UPDATE emp_dept20_checked 
+SET department_id = 30 
+WHERE employee_id = 202;
+-- ORA-01402: view WITH CHECK OPTION where-clause violation
+
+-- ❌ INSERT cu alt department_id
+INSERT INTO emp_dept20_checked 
+    (employee_id, first_name, last_name, email, department_id)
+VALUES (998, 'John', 'Doe', 'jdoe@test.com', 50);
+-- ORA-01402: view WITH CHECK OPTION where-clause violation
+
+-- ✅ INSERT cu department_id = 20
+INSERT INTO emp_dept20_checked 
+    (employee_id, first_name, last_name, email, department_id)
+VALUES (997, 'Jane', 'Smith', 'jsmith@test.com', 20);
+-- Succes
+```
+
+#### Explicație WITH CHECK OPTION:
+
+Această opțiune **forțează** ca orice INSERT sau UPDATE prin VIEW să respecte condiția din clauza WHERE a VIEW-ului. Este utilă pentru:
+- **Integritatea datelor** — nu poți modifica accidental înregistrări să iasă din VIEW
+- **Securitate** — utilizatorii nu pot "scăpa" de restricții prin UPDATE
+
+---
+
+### 7.8. Exemplu 6: WITH READ ONLY
+
+```sql
+-- VIEW doar pentru citire (raportare)
+CREATE VIEW emp_salary_report AS
+    SELECT 
+        e.employee_id,
+        e.first_name || ' ' || e.last_name AS full_name,
+        e.salary,
+        e.salary * 12 AS annual_salary,
+        d.department_name
+    FROM employees e
+    JOIN departments d ON e.department_id = d.department_id
+WITH READ ONLY;
+
+-- ✅ SELECT permis
+SELECT * FROM emp_salary_report WHERE annual_salary > 50000;
+
+-- ❌ INSERT interzis
+INSERT INTO emp_salary_report (employee_id, full_name, salary)
+VALUES (996, 'Test User', 5000);
+-- ORA-42399: cannot perform a DML operation on a read-only view
+
+-- ❌ UPDATE interzis
+UPDATE emp_salary_report SET salary = 10000 WHERE employee_id = 100;
+-- ORA-42399: cannot perform a DML operation on a read-only view
+
+-- ❌ DELETE interzis
+DELETE FROM emp_salary_report WHERE employee_id = 100;
+-- ORA-42399: cannot perform a DML operation on a read-only view
+```
+
+---
+
+### 7.9. Modificarea vizualizărilor
+
+```sql
+-- Recreare cu OR REPLACE (păstrează privilegiile)
+CREATE OR REPLACE VIEW emp_dept20 AS
+    SELECT employee_id, first_name, last_name, salary, email, hire_date, department_id
+    FROM employees
+    WHERE department_id = 20;
+
+-- Fără OR REPLACE ar trebui:
+-- 1. DROP VIEW emp_dept20;
+-- 2. CREATE VIEW emp_dept20 ...
+-- 3. GRANT din nou privilegiile
+```
+
+---
+
+### 7.10. Ștergerea vizualizărilor
+
+```sql
+DROP VIEW emp_dept20;
+
+-- Verificare
+SELECT view_name FROM user_views WHERE view_name = 'EMP_DEPT20';
+-- 0 rows returned
+```
+
+⚠️ **Atenție:** Ștergerea unui VIEW nu afectează tabelele de bază, dar șterge definiția VIEW-ului permanent.
+
+---
+
+## 8. Operații LMD pe vizualizări
+
+### 8.1. Reguli generale
+
+#### ✅ Se pot efectua operații LMD când:
+
+1. VIEW-ul este bazat pe **un singur tabel**
+2. Nu conține:
+   - Funcții grup (AVG, SUM, COUNT, MIN, MAX)
+   - GROUP BY, HAVING
+   - DISTINCT
+   - ROWNUM
+   - Operatori pe mulțimi (UNION, INTERSECT, MINUS)
+3. Coloana actualizată **nu este calculată** (expresie, funcție)
+
+#### ❌ Nu se pot efectua operații LMD când:
+
+- VIEW-ul conține orice din restricțiile de mai sus
+- VIEW-ul are `WITH READ ONLY`
+- Se încearcă actualizarea unei coloane non-key-preserved într-un JOIN
+
+---
+
+### 8.2. Exemplu detaliat — LMD pe VIEW simplu
+
+```sql
+-- Creăm VIEW simplu
+CREATE VIEW emp_it AS
+    SELECT employee_id, first_name, last_name, email, salary, department_id
+    FROM employees
+    WHERE department_id = 60;  -- IT Department
+
+-- ✅ INSERT
+INSERT INTO emp_it (employee_id, first_name, last_name, email, salary, department_id)
+VALUES (995, 'Alice', 'Johnson', 'ajohnson@test.com', 7000, 60);
+
+-- Verificare în tabelul de bază
+SELECT * FROM employees WHERE employee_id = 995;
+-- Linia apare în EMPLOYEES cu department_id = 60
+
+-- ✅ UPDATE
+UPDATE emp_it 
+SET salary = salary * 1.15 
+WHERE employee_id = 995;
+
+-- ✅ DELETE
+DELETE FROM emp_it WHERE employee_id = 995;
+
+-- Verificare
+SELECT * FROM employees WHERE employee_id = 995;
+-- 0 rows (șters și din tabelul de bază)
+```
+
+---
+
+### 8.3. Capcană: INSERT fără WITH CHECK OPTION
+
+```sql
+-- VIEW fără WITH CHECK OPTION
+CREATE VIEW emp_it_no_check AS
+    SELECT employee_id, first_name, last_name, email, salary, department_id
+    FROM employees
+    WHERE department_id = 60;
+
+-- ⚠️ INSERT cu alt department_id (diferit de 60)
+INSERT INTO emp_it_no_check 
+    (employee_id, first_name, last_name, email, salary, department_id)
+VALUES (994, 'Bob', 'Williams', 'bwilliams@test.com', 6500, 50);
+-- Succes! Dar...
+
+-- Verificare în VIEW
+SELECT * FROM emp_it_no_check WHERE employee_id = 994;
+-- 0 rows! (pentru că department_id = 50, nu 60)
+
+-- Verificare în tabelul de bază
+SELECT * FROM employees WHERE employee_id = 994;
+-- 1 row (linia există, dar nu e vizibilă în VIEW)
+```
+
+#### 💡 Soluție: WITH CHECK OPTION
+
+```sql
+CREATE OR REPLACE VIEW emp_it_checked AS
+    SELECT employee_id, first_name, last_name, email, salary, department_id
+    FROM employees
+    WHERE department_id = 60
+WITH CHECK OPTION;
+
+-- ❌ INSERT cu department_id != 60
+INSERT INTO emp_it_checked 
+    (employee_id, first_name, last_name, email, salary, department_id)
+VALUES (993, 'Charlie', 'Brown', 'cbrown@test.com', 6000, 50);
+-- ORA-01402: view WITH CHECK OPTION where-clause violation
+```
+
+---
+
+### 8.4. LMD pe VIEW cu JOIN — Key-preserved
+
+```sql
+-- VIEW cu JOIN
+CREATE VIEW emp_dept_loc AS
+    SELECT 
+        e.employee_id,      -- din EMPLOYEES (key-preserved)
+        e.first_name,       -- din EMPLOYEES
+        e.last_name,        -- din EMPLOYEES
+        e.salary,           -- din EMPLOYEES
+        d.department_id,    -- din DEPARTMENTS (non-key-preserved)
+        d.department_name,  -- din DEPARTMENTS
+        l.city              -- din LOCATIONS (non-key-preserved)
+    FROM employees e
+    JOIN departments d ON e.department_id = d.department_id
+    JOIN locations l ON d.location_id = l.location_id;
+
+-- ✅ UPDATE pe coloană din tabel key-preserved (EMPLOYEES)
+UPDATE emp_dept_loc 
+SET salary = 10000 
+WHERE employee_id = 100;
+-- Succes
+
+-- ❌ UPDATE pe coloană din tabel non-key-preserved (DEPARTMENTS)
+UPDATE emp_dept_loc 
+SET department_name = 'New IT' 
+WHERE employee_id = 100;
+-- ORA-01779: cannot modify a column which maps to a non key-preserved table
+
+-- Explicație: department_id poate apărea de multe ori în VIEW
+-- (mai mulți angajați în același departament)
+-- Oracle nu știe ce înregistrare din DEPARTMENTS să actualizeze
+```
+
+#### Soluție: UPDATE direct pe tabelul de bază
+
+```sql
+-- ✅ UPDATE direct
+UPDATE departments 
+SET department_name = 'New IT' 
+WHERE department_id = (
+    SELECT department_id 
+    FROM employees 
+    WHERE employee_id = 100
+);
+```
+
+---
+
+### 8.5. Verificarea coloanelor actualizabile
+
+```sql
+-- Dicționar: USER_UPDATABLE_COLUMNS
+SELECT column_name, updatable, insertable, deletable
+FROM user_updatable_columns
+WHERE table_name = 'EMP_DEPT_LOC';
+
+-- Rezultat exemplu:
+-- EMPLOYEE_ID   | YES | YES | YES
+-- FIRST_NAME    | YES | YES | YES
+-- SALARY        | YES | YES | YES
+-- DEPARTMENT_ID | NO  | NO  | NO    ← non-key-preserved
+-- DEPARTMENT_NAME| NO | NO  | NO    ← non-key-preserved
+-- CITY          | NO  | NO  | NO    ← non-key-preserved
+```
+
+---
+
+## 9. Vizualizări avansate
+
+### 9.1. VIEW cu subcereri
+
+```sql
+-- Angajații cu salariu peste media departamentului lor
+CREATE VIEW emp_above_avg AS
+    SELECT 
+        e.employee_id,
+        e.first_name,
+        e.last_name,
+        e.salary,
+        e.department_id,
+        (SELECT AVG(salary) 
+         FROM employees 
+         WHERE department_id = e.department_id) AS dept_avg_salary,
+        e.salary - (SELECT AVG(salary) 
+                    FROM employees 
+                    WHERE department_id = e.department_id) AS diff_from_avg
+    FROM employees e
+    WHERE e.salary > (
+        SELECT AVG(salary)
+        FROM employees
+        WHERE department_id = e.department_id
+    );
+
+-- Interogare
+SELECT * FROM emp_above_avg ORDER BY diff_from_avg DESC;
+```
+
+---
+
+### 9.2. VIEW recursiv (bazat pe alt VIEW)
+
+```sql
+-- VIEW 1: Statistici departamente
+CREATE VIEW dept_stats AS
+    SELECT 
+        department_id,
+        COUNT(*) AS nr_emp,
+        AVG(salary) AS avg_sal
+    FROM employees
+    GROUP BY department_id;
+
+-- VIEW 2: bazat pe VIEW 1
+CREATE VIEW large_depts AS
+    SELECT *
+    FROM dept_stats
+    WHERE nr_emp >= 5;
+
+-- Interogare
+SELECT * FROM large_depts ORDER BY avg_sal DESC;
+```
+
+⚠️ **Atenție:** Dacă ștergi `dept_stats`, `large_depts` devine **invalid**.
+
+```sql
+-- Verificare VIEW-uri invalide
+SELECT view_name, status FROM user_views;
+-- DEPT_STATS  | VALID
+-- LARGE_DEPTS | VALID
+
+DROP VIEW dept_stats;
+
+SELECT view_name, status FROM user_views;
+-- LARGE_DEPTS | INVALID
+
+-- Recompilare (dacă recreăm dept_stats)
+ALTER VIEW large_depts COMPILE;
+```
+
+---
+
+### 9.3. VIEW cu CASE
+
+```sql
+-- Clasificare angajați după salariu
+CREATE VIEW emp_salary_class AS
+    SELECT 
+        employee_id,
+        first_name || ' ' || last_name AS full_name,
+        salary,
+        CASE
+            WHEN salary < 5000 THEN 'Entry Level'
+            WHEN salary BETWEEN 5000 AND 10000 THEN 'Mid Level'
+            WHEN salary BETWEEN 10001 AND 15000 THEN 'Senior'
+            ELSE 'Executive'
+        END AS salary_class
+    FROM employees;
+
+-- Interogare
+SELECT salary_class, COUNT(*) AS count
+FROM emp_salary_class
+GROUP BY salary_class
+ORDER BY 
+    CASE salary_class
+        WHEN 'Entry Level' THEN 1
+        WHEN 'Mid Level' THEN 2
+        WHEN 'Senior' THEN 3
+        WHEN 'Executive' THEN 4
+    END;
+```
+
+---
+
+## 10. Probleme practice
+
+### 🎯 Secțiunea DIVISION
+
+#### Problema 1 (★☆☆ - Ușoară)
+
+**Enunț:** Găsiți angajații care au lucrat pe toate proiectele cu buget mai mare de 8000.
+
+<details>
+<summary>💡 Indicație</summary>
+
+Adaptați Metoda 2 (COUNT) — schimbați doar condiția pentru buget.
+</details>
+
+<details>
+<summary>✅ Soluție</summary>
+
+```sql
+-- Soluție cu COUNT
+SELECT employee_id
+FROM works_on
+WHERE project_id IN (
+    SELECT project_id
+    FROM project
+    WHERE budget > 8000
+)
+GROUP BY employee_id
+HAVING COUNT(DISTINCT project_id) = (
+    SELECT COUNT(*)
+    FROM project
+    WHERE budget > 8000
+);
+
+-- SAU cu dublu NOT EXISTS
+SELECT DISTINCT employee_id
+FROM works_on a
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM project p
+    WHERE p.budget > 8000
+    AND NOT EXISTS (
+        SELECT 1
+        FROM works_on b
+        WHERE b.project_id = p.project_id
+          AND b.employee_id = a.employee_id
+    )
 );
 ```
 </details>
 
 ---
 
-### #40 — Cu GROUP BY (Avansat — ROLLUP)
-**Cerință:** Creează un raport cu valoarea totală a comenzilor per oraș, plus un total general.
+#### Problema 2 (★★☆ - Medie)
+
+**Enunț:** Găsiți angajații care au lucrat pe exact aceleași proiecte ca și angajatul cu ID-ul 101.
 
 <details>
-<summary>💡 Gândire</summary>
-„Total per oraș + total general" = GROUP BY cu ROLLUP pentru totaluri parțiale și generale.
+<summary>💡 Indicație</summary>
+
+Folosiți relația: A = B ⟺ (A \ B = ∅) ȘI (B \ A = ∅)
 </details>
 
 <details>
 <summary>✅ Soluție</summary>
 
 ```sql
-SELECT
-    COALESCE(cl.oras, '── TOTAL GENERAL ──') AS oras,
-    COUNT(c.id_comanda)  AS nr_comenzi,
-    SUM(c.total)         AS valoare_totala
-FROM clienti cl
-JOIN comenzi c ON cl.id_client = c.id_client
-WHERE c.status = 'livrata'
-GROUP BY ROLLUP(cl.oras)
-ORDER BY GROUPING(cl.oras), cl.oras;
+SELECT DISTINCT a.employee_id
+FROM works_on a
+WHERE a.employee_id != 101
+AND NOT EXISTS (
+    -- Proiectele lui 101 MINUS proiectele lui a
+    (SELECT project_id FROM works_on WHERE employee_id = 101)
+    MINUS
+    (SELECT project_id FROM works_on WHERE employee_id = a.employee_id)
+)
+AND NOT EXISTS (
+    -- Proiectele lui a MINUS proiectele lui 101
+    (SELECT project_id FROM works_on WHERE employee_id = a.employee_id)
+    MINUS
+    (SELECT project_id FROM works_on WHERE employee_id = 101)
+);
 ```
 </details>
 
 ---
 
-## 📊 Recapitulare vizuală
+#### Problema 3 (★★☆ - Medie)
 
-| Semnal din cerință | Folosești | Exemplu |
-|---|---|---|
-| „afișează toate...", „lista..." | ❌ fără | lista cărților de tip Roman |
-| „câți / câte... per X" | ✅ cu | câte cărți per gen |
-| „cel mai mare / mic din..." | ❌ fără (subquery) | cartea cu cel mai mic preț |
-| „total / sumă... per X" | ✅ cu | venit total per autor |
-| „media... per X" | ✅ cu | nota medie per carte |
-| „mai mult decât media..." | ❌ fără (subquery) | cărți cu preț > media |
-| „grupurile cu mai mult de..." | ✅ cu + HAVING | autori cu > 2 cărți |
-| „există cel puțin un..." | ❌ fără (EXISTS/IN) | autori cu cărți sub 45 lei |
-| „top N per..." | ✅ cu + FETCH/ROWNUM | top 3 clienți |
+**Enunț:** Găsiți angajații care au lucrat pe cel puțin 3 proiecte diferite.
 
+<details>
+<summary>💡 Indicație</summary>
 
+Aceasta NU este o problemă de DIVISION — este o problemă de agregare simplă.
+</details>
+
+<details>
+<summary>✅ Soluție</summary>
+
+```sql
+SELECT employee_id
+FROM works_on
+GROUP BY employee_id
+HAVING COUNT(DISTINCT project_id) >= 3;
 ```
+</details>
+
+---
+
+#### Problema 4 (★★★ - Dificilă)
+
+**Enunț:** Găsiți departamentele în care toți angajații au lucrat pe cel puțin un proiect.
+
+<details>
+<summary>💡 Indicație</summary>
+
+Combinați DIVISION cu verificare de existență în WORKS_ON.
+</details>
+
+<details>
+<summary>✅ Soluție</summary>
+
+```sql
+-- Varianta 1: Dublu NOT EXISTS
+SELECT DISTINCT d.department_id, d.department_name
+FROM departments d
+WHERE EXISTS (
+    -- Departamentul are angajați
+    SELECT 1 FROM employees WHERE department_id = d.department_id
+)
+AND NOT EXISTS (
+    -- Nu există angajat în departament fără proiecte
+    SELECT 1
+    FROM employees e
+    WHERE e.department_id = d.department_id
+    AND NOT EXISTS (
+        SELECT 1
+        FROM works_on w
+        WHERE w.employee_id = e.employee_id
+    )
+);
+
+-- Varianta 2: Cu COUNT
+SELECT department_id
+FROM employees
+GROUP BY department_id
+HAVING COUNT(employee_id) = COUNT(
+    DISTINCT CASE 
+        WHEN employee_id IN (SELECT employee_id FROM works_on)
+        THEN employee_id
+    END
+);
+```
+</details>
+
+---
+
+#### Problema 5 (★★★ - Dificilă)
+
+**Enunț:** Găsiți angajații care au lucrat pe mai multe proiecte decât managerul lor.
+
+<details>
+<summary>💡 Indicație</summary>
+
+Folosiți subcereri corelate și COUNT. Aveți nevoie de EMPLOYEES.MANAGER_ID.
+</details>
+
+<details>
+<summary>✅ Soluție</summary>
+
+```sql
+SELECT 
+    e.employee_id,
+    e.first_name,
+    e.last_name,
+    (SELECT COUNT(*) FROM works_on WHERE employee_id = e.employee_id) AS nr_proiecte_angajat,
+    (SELECT COUNT(*) FROM works_on WHERE employee_id = e.manager_id) AS nr_proiecte_manager
+FROM employees e
+WHERE e.manager_id IS NOT NULL
+AND (
+    SELECT COUNT(*)
+    FROM works_on
+    WHERE employee_id = e.employee_id
+) > (
+    SELECT COUNT(*)
+    FROM works_on
+    WHERE employee_id = e.manager_id
+);
+```
+</details>
+
+---
+
+### 🎯 Secțiunea VIEW
+
+#### Problema 6 (★☆☆ - Ușoară)
+
+**Enunț:** Creați un VIEW care afișează doar angajații cu salariu peste 10000, incluzând coloanele: employee_id, full_name (concat first + last), salary. VIEW-ul trebuie să fie read-only.
+
+<details>
+<summary>✅ Soluție</summary>
+
+```sql
+CREATE VIEW high_earners AS
+    SELECT 
+        employee_id,
+        first_name || ' ' || last_name AS full_name,
+        salary
+    FROM employees
+    WHERE salary > 10000
+WITH READ ONLY;
+
+-- Test
+SELECT * FROM high_earners ORDER BY salary DESC;
+```
+</details>
+
+---
+
+#### Problema 7 (★★☆ - Medie)
+
+**Enunț:** Creați un VIEW care afișează pentru fiecare departament: department_name, numărul de angajați, salariul mediu, salariul minim și maxim. Includeți doar departamentele cu cel puțin 3 angajați.
+
+<details>
+<summary>✅ Soluție</summary>
+
+```sql
+CREATE VIEW dept_salary_stats AS
+    SELECT 
+        d.department_name,
+        COUNT(e.employee_id) AS nr_angajati,
+        ROUND(AVG(e.salary), 2) AS salariu_mediu,
+        MIN(e.salary) AS salariu_minim,
+        MAX(e.salary) AS salariu_maxim
+    FROM departments d
+    JOIN employees e ON d.department_id = e.department_id
+    GROUP BY d.department_name
+    HAVING COUNT(e.employee_id) >= 3;
+
+-- Test
+SELECT * FROM dept_salary_stats ORDER BY salariu_mediu DESC;
+```
+</details>
+
+---
+
+#### Problema 8 (★★☆ - Medie)
+
+**Enunț:** Creați un VIEW care să afișeze angajații din departamentul 50, asigurându-vă că nu pot fi mutați în alt departament prin UPDATE pe VIEW (folosiți WITH CHECK OPTION).
+
+Testați VIEW-ul încercând:
+1. UPDATE valid (schimbarea salariului)
+2. UPDATE invalid (schimbarea department_id)
+
+<details>
+<summary>✅ Soluție</summary>
+
+```sql
+-- Creare VIEW
+CREATE VIEW emp_dept50 AS
+    SELECT employee_id, first_name, last_name, email, salary, department_id
+    FROM employees
+    WHERE department_id = 50
+WITH CHECK OPTION CONSTRAINT emp_dept50_ck;
+
+-- Test 1: UPDATE valid
+UPDATE emp_dept50 SET salary = salary * 1.1 WHERE employee_id = 124;
+-- Succes
+
+-- Test 2: UPDATE invalid
+UPDATE emp_dept50 SET department_id = 60 WHERE employee_id = 124;
+-- ORA-01402: view WITH CHECK OPTION where-clause violation
+
+-- Rollback pentru a reveni la starea inițială
+ROLLBACK;
+```
+</details>
+
+---
+
+#### Problema 9 (★★★ - Dificilă)
+
+**Enunț:** Creați un VIEW complex care combină:
+- Angajați cu departamentele și locațiile lor
+- Numărul de proiecte pe care lucrează fiecare
+- Total ore lucrate pe toate proiectele
+
+Includeți doar angajații care au lucrat cel puțin pe un proiect.
+
+<details>
+<summary>✅ Soluție</summary>
+
+```sql
+CREATE VIEW emp_project_summary AS
+    SELECT 
+        e.employee_id,
+        e.first_name || ' ' || e.last_name AS full_name,
+        d.department_name,
+        l.city,
+        COUNT(DISTINCT w.project_id) AS nr_proiecte,
+        NVL(SUM(w.hours_worked), 0) AS total_ore
+    FROM employees e
+    JOIN departments d ON e.department_id = d.department_id
+    JOIN locations l ON d.location_id = l.location_id
+    JOIN works_on w ON e.employee_id = w.employee_id
+    GROUP BY 
+        e.employee_id,
+        e.first_name,
+        e.last_name,
+        d.department_name,
+        l.city;
+
+-- Test
+SELECT * FROM emp_project_summary WHERE nr_proiecte >= 2;
+
+-- Verificare actualizabilitate
+SELECT column_name, updatable
+FROM user_updatable_columns
+WHERE table_name = 'EMP_PROJECT_SUMMARY';
+```
+</details>
+
+---
+
+#### Problema 10 (★★★ - Dificilă)
+
+**Enunț:** Creați o ierarhie de VIEW-uri:
+1. VIEW de bază: angajații cu departamentele lor
+2. VIEW intermediar: adaugă statistici de salariu pe departament
+3. VIEW final: include doar angajații cu salariu peste media departamentului
+
+Testați interogând VIEW-ul final.
+
+<details>
+<summary>✅ Soluție</summary>
+
+```sql
+-- VIEW 1: Bază
+CREATE VIEW v1_emp_dept AS
+    SELECT 
+        e.employee_id,
+        e.first_name,
+        e.last_name,
+        e.salary,
+        e.department_id,
+        d.department_name
+    FROM employees e
+    JOIN departments d ON e.department_id = d.department_id;
+
+-- VIEW 2: Cu statistici
+CREATE VIEW v2_emp_dept_stats AS
+    SELECT 
+        v1.*,
+        (SELECT AVG(salary) 
+         FROM employees 
+         WHERE department_id = v1.department_id) AS dept_avg_salary,
+        (SELECT MAX(salary) 
+         FROM employees 
+         WHERE department_id = v1.department_id) AS dept_max_salary
+    FROM v1_emp_dept v1;
+
+-- VIEW 3: Peste medie
+CREATE VIEW v3_above_average AS
+    SELECT *
+    FROM v2_emp_dept_stats
+    WHERE salary > dept_avg_salary;
+
+-- Test
+SELECT 
+    employee_id,
+    first_name,
+    last_name,
+    department_name,
+    salary,
+    dept_avg_salary,
+    ROUND(salary - dept_avg_salary, 2) AS diff_from_avg
+FROM v3_above_average
+ORDER BY diff_from_avg DESC;
+
+-- Verificare ierarhie
+SELECT view_name, text 
+FROM user_views 
+WHERE view_name LIKE 'V__%'
+ORDER BY view_name;
+```
+</details>
+
+---
+
+### 🎯 Probleme combinate DIVISION + VIEW
+
+#### Problema 11 (★★★ - Dificilă)
+
+**Enunț:** Creați un VIEW care afișează angajații care au lucrat pe toate proiectele din departamentul lor. VIEW-ul trebuie să includă: employee_id, full_name, department_name, nr_proiecte_departament, nr_proiecte_angajat.
+
+<details>
+<summary>💡 Indicație</summary>
+
+Combinați DIVISION cu JOIN-uri pentru a obține informațiile cerute.
+</details>
+
+<details>
+<summary>✅ Soluție</summary>
+
+```sql
+CREATE VIEW emp_all_dept_projects AS
+WITH dept_projects AS (
+    -- Proiecte conduse/asociate cu fiecare departament
+    SELECT DISTINCT 
+        e.department_id,
+        p.project_id
+    FROM employees e
+    JOIN works_on w ON e.employee_id = w.employee_id
+    JOIN project p ON w.project_id = p.project_id
+),
+emp_complete AS (
+    -- Angajații care au lucrat pe toate proiectele departamentului lor
+    SELECT DISTINCT e.employee_id
+    FROM employees e
+    WHERE NOT EXISTS (
+        SELECT dp.project_id
+        FROM dept_projects dp
+        WHERE dp.department_id = e.department_id
+        MINUS
+        SELECT w.project_id
+        FROM works_on w
+        WHERE w.employee_id = e.employee_id
+    )
+    AND EXISTS (
+        SELECT 1 FROM dept_projects WHERE department_id = e.department_id
+    )
+)
+SELECT 
+    e.employee_id,
+    e.first_name || ' ' || e.last_name AS full_name,
+    d.department_name,
+    (SELECT COUNT(DISTINCT project_id) 
+     FROM dept_projects 
+     WHERE department_id = e.department_id) AS nr_proiecte_departament,
+    (SELECT COUNT(DISTINCT project_id) 
+     FROM works_on 
+     WHERE employee_id = e.employee_id) AS nr_proiecte_angajat
+FROM emp_complete ec
+JOIN employees e ON ec.employee_id = e.employee_id
+JOIN departments d ON e.department_id = d.department_id;
+
+-- Test
+SELECT * FROM emp_all_dept_projects;
+```
+</details>
+
+---
+
+#### Problema 12 (★★★ - Foarte dificilă)
+
+**Enunț:** Creați un VIEW care implementează o "clasificare" a angajaților după gradul de acoperire a proiectelor:
+- "Complete" — au lucrat pe toate proiectele disponibile
+- "Majority" — au lucrat pe > 50% din proiecte
+- "Minority" — au lucrat pe <= 50% din proiecte
+
+VIEW-ul trebuie să fie updatable pe coloana salary (dacă e posibil).
+
+<details>
+<summary>✅ Soluție</summary>
+
+```sql
+CREATE VIEW emp_project_coverage AS
+    SELECT 
+        e.employee_id,
+        e.first_name,
+        e.last_name,
+        e.salary,
+        e.department_id,
+        COUNT(DISTINCT w.project_id) AS nr_proiecte_lucrate,
+        (SELECT COUNT(*) FROM project) AS total_proiecte,
+        ROUND(
+            COUNT(DISTINCT w.project_id) * 100.0 / (SELECT COUNT(*) FROM project),
+            2
+        ) AS procent_acoperire,
+        CASE
+            WHEN COUNT(DISTINCT w.project_id) = (SELECT COUNT(*) FROM project)
+                THEN 'Complete'
+            WHEN COUNT(DISTINCT w.project_id) > (SELECT COUNT(*) FROM project) / 2
+                THEN 'Majority'
+            ELSE 'Minority'
+        END AS coverage_category
+    FROM employees e
+    LEFT JOIN works_on w ON e.employee_id = w.employee_id
+    GROUP BY e.employee_id, e.first_name, e.last_name, e.salary, e.department_id;
+
+-- Test citire
+SELECT * FROM emp_project_coverage ORDER BY procent_acoperire DESC;
+
+-- Test UPDATE (salary e din tabelul de bază, deci updatable)
+UPDATE emp_project_coverage 
+SET salary = salary * 1.05 
+WHERE coverage_category = 'Complete';
+
+-- Verificare
+SELECT column_name, updatable, insertable, deletable
+FROM user_updatable_columns
+WHERE table_name = 'EMP_PROJECT_COVERAGE';
+```
+</details>
 
 ---
