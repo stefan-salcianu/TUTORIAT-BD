@@ -25,6 +25,6 @@
 | **tutoriat5** | JOIN | ✔️ Finalizat |
 | **tutoriat6** | Cereri Ierarhice, WITH și EXISTS | ✔️ Finalizat |
 | **tutoriat7** | Operatorul DIVISION și Vizualizări (VIEW) | ✔️ Finalizat |
-| **tutoriat8** | ⏱️ Exerciții cu GROUP BY | 🔜 Urmează |
+| **tutoriat8** | ⏱️ Exerciții cu GROUP BY | ✔️ Finalizat |
 | **tutoriat9** | ⏱️ În lucru | 🔜 Urmează |
 | **tutoriat10** | ⏱️ În lucru | 🔜 Urmează |
