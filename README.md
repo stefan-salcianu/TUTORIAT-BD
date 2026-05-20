@@ -18,13 +18,13 @@
 
 | Tutoriat | Tema Abordată | Status |
 | :--- | :--- | :--- |
-| **tutoriat1** | ⏱️ Tabele, Relații, Diagrame, Normalizare | ✔️ Finalizat |
-| **tutoriat2** | ⏱️ Limbajul de Control al Datelor (LCD)/ Definire a Datelor LDD | ✔️ Finalizat |
-| **tutoriat3** | ⏱️ Limbajul de Manipulare a Datelor (LCD)  | ✔️ Finalizat |
-| **tutoriat4** | ⏱️ Analiza completă a sintaxei SELECT | ✔️ Finalizat |
-| **tutoriat5** | ⏱️ JOIN | ✔️ Finalizat |
-| **tutoriat6** | ⏱️ Cereri Ierarhice, WITH și EXISTS | ✔️ Finalizat |
-| **tutoriat7** | ⏱️ Exercitii cu GROUP BY | ✔️ Finalizat |
+| **tutoriat1** | Tabele, Relații, Diagrame, Normalizare | ✔️ Finalizat |
+| **tutoriat2** | Limbajul de Control al Datelor (LCD)/ Definire a Datelor LDD | ✔️ Finalizat |
+| **tutoriat3** | Limbajul de Manipulare a Datelor (LCD)  | ✔️ Finalizat |
+| **tutoriat4** | Analiza completă a sintaxei SELECT | ✔️ Finalizat |
+| **tutoriat5** | JOIN | ✔️ Finalizat |
+| **tutoriat6** | Cereri Ierarhice, WITH și EXISTS | ✔️ Finalizat |
+| **tutoriat7** | Exercitii cu GROUP BY | ✔️ Finalizat |
 | **tutoriat8** | ⏱️ În lucru | 🔜 Urmează |
 | **tutoriat9** | ⏱️ În lucru | 🔜 Urmează |
 | **tutoriat10** | ⏱️ În lucru | 🔜 Urmează |
