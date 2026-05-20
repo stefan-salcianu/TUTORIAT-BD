@@ -24,7 +24,7 @@
 | **tutoriat4** | Analiza completă a sintaxei SELECT | ✔️ Finalizat |
 | **tutoriat5** | JOIN | ✔️ Finalizat |
 | **tutoriat6** | Cereri Ierarhice, WITH și EXISTS | ✔️ Finalizat |
-| **tutoriat7** | Exercitii cu GROUP BY | ✔️ Finalizat |
-| **tutoriat8** | ⏱️ În lucru | 🔜 Urmează |
+| **tutoriat7** | Operatorul DIVISION și Vizualizări (VIEW) | ✔️ Finalizat |
+| **tutoriat8** | ⏱️ Exerciții cu GROUP BY | 🔜 Urmează |
 | **tutoriat9** | ⏱️ În lucru | 🔜 Urmează |
 | **tutoriat10** | ⏱️ În lucru | 🔜 Urmează |
